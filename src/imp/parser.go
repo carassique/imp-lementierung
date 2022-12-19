@@ -1,6 +1,9 @@
 package imp
 
-import "errors"
+import (
+	"errors"
+	"unicode"
+)
 
 func expect(token string) {
 
@@ -65,22 +68,75 @@ func parseProgram() {
 	parseBlock()
 }
 
-func isValue() {
+func isValue(tokenCandidate string) bool {
+	return false
+}
+
+func isAmbiguous(tokenCandidate string) bool {
+	return tokenCandidate == ASSIGNMENT
+}
+
+func isTerminal(tokenCandidate string, terminalTokens StringSet) bool {
+	if _, ok := terminalTokens[tokenCandidate]; ok {
+		return ok
+	}
+	return false
+}
+
+func advanceToken() {
 
 }
 
-func isTerminal(){
+func tokenize(sourceCode string, terminalTokens StringSet) []string {
+	// TODO: simplify code
+	tokenList := make([]string, 0)
 
+	currentToken := ""
+	tokenCandidate := ""
+	for _, character := range sourceCode {
+		if unicode.IsSpace(character) {
+			if len(currentToken) > 0 {
+				if len(tokenCandidate) > 0 {
+					tokenList = append(tokenList, currentToken)
+				} else {
+					//TODO: error - no token recognized!
+				}
+				tokenCandidate = ""
+				currentToken = ""
+			}
+		} else {
+			// Ignore spaces between tokens
+			currentToken += (string)(character)
+			if isTerminal(currentToken, terminalTokens) {
+				tokenCandidate = currentToken
+				if !isAmbiguous(currentToken) {
+					tokenList = append(tokenList, currentToken)
+					currentToken = ""
+					tokenCandidate = ""
+				}
+			} else {
+				if len(tokenCandidate) > 0 {
+					tokenList = append(tokenList, tokenCandidate)
+					currentToken = (string)(character)
+				}
+				if isTerminal(currentToken, terminalTokens) {
+					tokenCandidate = currentToken
+					if !isAmbiguous(currentToken) {
+						tokenList = append(tokenList, currentToken)
+						currentToken = ""
+						tokenCandidate = ""
+					}
+				}
+			}
+		}
+
+	}
+	if len(tokenCandidate) > 0 {
+		tokenList = append(tokenList, tokenCandidate)
+	}
+
+	return tokenList
 }
-
-func advanceToken(){
-
-}
-
-func tokenize(sourceCode string) string[] {
-
-}
-
 
 type StringSet map[string]struct{}
 
@@ -92,34 +148,17 @@ func toSet(tokens []string) StringSet {
 	return tokenSet
 }
 
-const OPEN_BLOCK_GROUPING = "{"
-const CLOSE_BLOCK_GROUPING = "}"
-const PRINT = "print"
-const WHILE = "while"
-const IF = "if"
-const ELSE = "else"
-const STATEMENT_DELIMITER = ";"
-const DECLARATION = ":="
-const ASSIGNMENT = "="
-const ADD = "+"
-const MULTIPLY = "*"
-const OR = "||"
-const AND = "&&"
-const NOT = "!"
-const EQUALS = "=="
-const LESS_THAN = "<"
-const OPEN_EXPRESSION_GROUPING = "("
-const CLOSE_EXPRESSION_GROUPING = ")"
-
+var terminalTokens = toSet([]string{
+	OPEN_BLOCK_GROUPING, CLOSE_BLOCK_GROUPING,
+	PRINT, WHILE, IF, ELSE, STATEMENT_DELIMITER,
+	DECLARATION, ASSIGNMENT, ADD, MULTIPLY,
+	OR, AND, NOT, EQUALS, LESS_THAN,
+	OPEN_EXPRESSION_GROUPING, CLOSE_EXPRESSION_GROUPING,
+})
 
 func parse(sourceCode string) (Stmt, error) {
-	terminalTokens := toSet([...]string{
-		OPEN_BLOCK_GROUPING, CLOSE_BLOCK_GROUPING,
-		PRINT, WHILE, IF, ELSE, STATEMENT_DELIMITER, 
-		DECLARATION, ASSIGNMENT, ADD, MULTIPLY,
-		OR, AND, NOT, EQUALS, LESS_THAN,
-		OPEN_EXPRESSION_GROUPING, CLOSE_EXPRESSION_GROUPING
-	})
-	
+
+	//tokensArray := tokenize(sourceCode, terminalTokens)
+
 	return nil, errors.New("Not implemented")
 }

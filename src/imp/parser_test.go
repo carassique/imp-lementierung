@@ -12,3 +12,8 @@ func TestParser(t *testing.T) {
 	assert.NoError(t, error)
 	assert.True(t, program.check(typeMap))
 }
+
+func TestTokenizer(t *testing.T) {
+	tokenList := tokenize("print { } = == =", terminalTokens)
+	t.Logf("%v", tokenList)
+}
