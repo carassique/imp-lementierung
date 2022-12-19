@@ -137,6 +137,10 @@ type Assign struct {
 	rhs Exp
 }
 
+type Print struct {
+	exp Exp
+}
+
 // Expression cases (incomplete)
 
 type Bool bool
@@ -145,16 +149,25 @@ type Mult [2]Exp
 type Plus [2]Exp
 type And [2]Exp
 type Or [2]Exp
+type LessThan [2]Exp
 type Var string
 
 /////////////////////////
 // Stmt instances
+
+func (stmt Print) eval(s ValState) {
+	println(showVal(stmt.exp.eval(s)))
+}
 
 func (stmt Assign) eval(s ValState) {
 	s[stmt.lhs] = stmt.rhs.eval(s)
 }
 
 // pretty print
+
+func (stmt Print) pretty() string {
+	return "print " + stmt.exp.pretty()
+}
 
 func (ite IfThenElse) pretty() string {
 	return "if " + ite.cond.pretty() + " { " + ite.thenStmt.pretty() + " } else { " + ite.elseStmt.pretty() + " }"
@@ -222,6 +235,10 @@ func (decl Decl) eval(s ValState) {
 
 // type check
 
+func (stmt Print) check(t TyState) bool {
+	return true //TODO: implement
+}
+
 func (while While) check(t TyState) bool {
 	return true //TODO: implement
 }
@@ -257,6 +274,10 @@ func (a Assign) check(t TyState) bool {
 // Exp instances
 
 // pretty print
+
+func (x LessThan) pretty() string {
+	return x[0].pretty() + " < " + x[1].pretty()
+}
 
 func (x Var) pretty() string {
 	return (string)(x)
@@ -325,6 +346,15 @@ func (e Or) pretty() string {
 
 // Evaluator
 
+func (exp LessThan) eval(s ValState) Val {
+	return mkBool(exp[0].eval(s).valI < exp[1].eval(s).valI) // TOOD: implement checks
+}
+
+func (exp Var) eval(s ValState) Val {
+	variableName := (string)(exp)
+	return s[variableName] //TODO: implement eval time checks (variable exists?)
+}
+
 func (x Bool) eval(s ValState) Val {
 	return mkBool((bool)(x))
 }
@@ -376,6 +406,10 @@ func (e Or) eval(s ValState) Val {
 }
 
 // Type inferencer/checker
+
+func (x LessThan) infer(t TyState) Type {
+	return TyInt //TODO: implement
+}
 
 func (x Var) infer(t TyState) Type {
 	y := (string)(x)
@@ -509,15 +543,25 @@ func ex4() {
 	println(showVal(s["variableName1"]))
 	// ast := plus(number(1), number(2))
 	// run(ast)
+	println("\n*******")
 }
 
 func ex5() {
 	s := make(map[string]Val)
+
+	condition := (LessThan)([2]Exp{number(0),
+		(Var)("iterator")})
+
 	wh := While{
-		cond: boolean(true),
-		stmt: Assign{
-			lhs: "iterator",
-			rhs: number(2),
+		cond: condition,
+		stmt: Seq{
+			Assign{
+				lhs: "iterator",
+				rhs: plus((Var)("iterator"), number(-1)),
+			},
+			Print{
+				exp: (Var)("iterator"),
+			},
 		},
 	}
 
