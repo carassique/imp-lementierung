@@ -14,6 +14,6 @@ func TestParser(t *testing.T) {
 }
 
 func TestTokenizer(t *testing.T) {
-	tokenList := tokenize("print { } = == =", terminalTokens)
+	tokenList := tokenize("print 123 -11 ham Jam true { } = == =", terminalTokens)
 	t.Logf("%v", tokenList)
 }
