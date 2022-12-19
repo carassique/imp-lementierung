@@ -1,19 +1,26 @@
 package imp
 
-// Type inferencer/checker
-
-// type check
+/*
+	Statements type checking
+*/
 
 func (stmt Print) check(t TyState) bool {
-	return true //TODO: implement
+	parameterType := stmt.exp.infer(t)
+	return parameterType != TyIllTyped
 }
 
 func (while While) check(t TyState) bool {
-	return true //TODO: implement
+	conditionType := while.cond.infer(t) //TODO: change as below
+	statementTypeCheckResult := while.stmt.check(t)
+
+	return conditionType == TyBool && statementTypeCheckResult
 }
 
 func (ite IfThenElse) check(t TyState) bool {
-	return true //TODO: implement
+	conditionType := ite.cond.infer(t) // TODO: change to remove simplificating assumption
+	thenStatementTypeCheckResult := ite.thenStmt.check(t)
+	elseStatementTypeCheckResult := ite.elseStmt.check(t)
+	return conditionType == TyBool && thenStatementTypeCheckResult && elseStatementTypeCheckResult
 }
 
 func (stmt Seq) check(t TyState) bool {
@@ -38,6 +45,10 @@ func (a Assign) check(t TyState) bool {
 	x := (string)(a.lhs)
 	return t[x] == a.rhs.infer(t)
 }
+
+/*
+	Expression type inference
+*/
 
 func (x LessThan) infer(t TyState) Type {
 	return TyInt //TODO: implement
