@@ -127,6 +127,11 @@ type IfThenElse struct {
 	elseStmt Stmt
 }
 
+type While struct {
+	cond Exp
+	stmt Stmt
+}
+
 type Assign struct {
 	lhs string
 	rhs Exp
@@ -145,7 +150,23 @@ type Var string
 /////////////////////////
 // Stmt instances
 
+func (stmt Assign) eval(s ValState) {
+	s[stmt.lhs] = stmt.rhs.eval(s)
+}
+
 // pretty print
+
+func (ite IfThenElse) pretty() string {
+	return "if " + ite.cond.pretty() + " { " + ite.thenStmt.pretty() + " } else { " + ite.elseStmt.pretty() + " }"
+}
+
+func (stmt While) pretty() string {
+	return "while " + stmt.cond.pretty() + " { " + stmt.stmt.pretty() + " } "
+}
+
+func (stmt Assign) pretty() string {
+	return stmt.lhs + " = " + stmt.rhs.pretty() + ";"
+}
 
 func (stmt Seq) pretty() string {
 	return stmt[0].pretty() + "; " + stmt[1].pretty()
@@ -175,7 +196,20 @@ func (ite IfThenElse) eval(s ValState) {
 	} else {
 		fmt.Printf("if-then-else eval fail")
 	}
+}
 
+func (while While) eval(s ValState) {
+	conditionHolds := true
+	for conditionHolds {
+		v := while.cond.eval(s)
+		if v.flag == ValueBool {
+			if v.valB {
+				while.stmt.eval(s)
+			} else {
+				conditionHolds = false
+			}
+		}
+	}
 }
 
 // Maps are represented via points.
@@ -187,6 +221,14 @@ func (decl Decl) eval(s ValState) {
 }
 
 // type check
+
+func (while While) check(t TyState) bool {
+	return true //TODO: implement
+}
+
+func (ite IfThenElse) check(t TyState) bool {
+	return true //TODO: implement
+}
 
 func (stmt Seq) check(t TyState) bool {
 	if !stmt[0].check(t) {
@@ -449,6 +491,45 @@ func ex3() {
 	run(ast)
 }
 
+func ex4() {
+	s := make(map[string]Val)
+	program := IfThenElse{
+		cond: boolean(true),
+		thenStmt: Assign{
+			lhs: "variableName1",
+			rhs: number(1),
+		},
+		elseStmt: Assign{
+			lhs: "variableName1",
+			rhs: number(2),
+		},
+	}
+	program.eval(s)
+	println("\n*******")
+	println(showVal(s["variableName1"]))
+	// ast := plus(number(1), number(2))
+	// run(ast)
+}
+
+func ex5() {
+	s := make(map[string]Val)
+	wh := While{
+		cond: boolean(true),
+		stmt: Assign{
+			lhs: "iterator",
+			rhs: number(2),
+		},
+	}
+
+	seq := Seq{Assign{
+		lhs: "iterator",
+		rhs: number(10),
+	}, wh}
+	seq.eval(s)
+	println("\n*******")
+	println(showVal(s["iterator"]))
+}
+
 func main() {
 
 	fmt.Printf("\n")
@@ -456,4 +537,6 @@ func main() {
 	ex1()
 	ex2()
 	ex3()
+	ex4()
+	ex5()
 }
