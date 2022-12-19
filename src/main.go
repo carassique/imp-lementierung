@@ -63,6 +63,9 @@ func showVal(v Val) string {
 	switch {
 	case v.flag == ValueInt:
 		s = Num(v.valI).pretty()
+		if v.valI < 0 {
+			s = "(" + s + ")"
+		}
 	case v.flag == ValueBool:
 		s = Bool(v.valB).pretty()
 	case v.flag == Undefined:
@@ -178,7 +181,7 @@ func (stmt While) pretty() string {
 }
 
 func (stmt Assign) pretty() string {
-	return stmt.lhs + " = " + stmt.rhs.pretty() + ";"
+	return stmt.lhs + " = " + stmt.rhs.pretty()
 }
 
 func (stmt Seq) pretty() string {
@@ -293,7 +296,12 @@ func (x Bool) pretty() string {
 }
 
 func (x Num) pretty() string {
-	return strconv.Itoa(int(x))
+	value := int(x)
+	strValue := strconv.Itoa(value)
+	if value < 0 {
+		return "(" + strValue + ")"
+	}
+	return strValue
 }
 
 func (e Mult) pretty() string {
@@ -509,6 +517,13 @@ func run(e Exp) {
 	fmt.Printf("\n %s", showType(e.infer(t)))
 }
 
+func runStatement(e Stmt) {
+	s := make(map[string]Val)
+	fmt.Printf("\n ******* ")
+	fmt.Printf("\n %s \n", e.pretty())
+	e.eval(s)
+}
+
 func ex1() {
 	ast := plus(mult(number(1), number(2)), number(0))
 
@@ -572,6 +587,32 @@ func ex5() {
 	seq.eval(s)
 	println("\n*******")
 	println(showVal(s["iterator"]))
+	println("\n*******")
+}
+
+func ex6() {
+	condition := (LessThan)([2]Exp{number(0),
+		(Var)("iterator")})
+
+	wh := While{
+		cond: condition,
+		stmt: Seq{
+			Assign{
+				lhs: "iterator",
+				rhs: plus((Var)("iterator"), number(-1)),
+			},
+			Print{
+				exp: (Var)("iterator"),
+			},
+		},
+	}
+
+	seq := Seq{Assign{
+		lhs: "iterator",
+		rhs: number(10),
+	}, wh}
+
+	runStatement(seq)
 }
 
 func main() {
@@ -583,4 +624,5 @@ func main() {
 	ex3()
 	ex4()
 	ex5()
+	ex6()
 }
