@@ -8,7 +8,7 @@ import "fmt"
 // Stmt instances
 
 func (stmt Print) eval(s ValState) {
-	println(showVal(stmt.exp.eval(s)))
+	stmt.out <- showVal(stmt.exp.eval(s))
 }
 
 func (stmt Assign) eval(s ValState) {

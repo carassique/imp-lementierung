@@ -106,6 +106,7 @@ func parseStatementPrint(tokens TokenizerStream) (Stmt, error) {
 	//TODO: handle error
 	return (Stmt)(Print{
 		exp: exp,
+		out: tokens.context.out,
 	}), error
 	//expect("print")
 
@@ -162,6 +163,12 @@ type Token struct {
 
 type TokenizerStream struct {
 	tokenList *TokenizerResultData
+	context   ExecutionContext
+}
+
+type ExecutionContext struct {
+	out    PrintChannel
+	signal SignalChannel
 }
 
 type TokenizerResult interface {
@@ -360,11 +367,12 @@ var terminalTokens = toSet([]string{
 	OPEN_EXPRESSION_GROUPING, CLOSE_EXPRESSION_GROUPING,
 })
 
-func parse(sourceCode string) (Stmt, error) {
+func parse(sourceCode string, context ExecutionContext) (Stmt, error) {
 
 	tokensArray := tokenize(sourceCode, terminalTokens)
 	ast, error := parseProgram(TokenizerStream{
 		tokenList: &tokensArray,
+		context:   context,
 	})
 	return ast, error
 }

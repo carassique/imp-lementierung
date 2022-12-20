@@ -69,8 +69,12 @@ type Assign struct {
 	rhs Exp
 }
 
+type PrintChannel chan string
+type SignalChannel chan bool
+
 type Print struct {
 	exp Exp
+	out PrintChannel
 }
 
 // Expression cases (incomplete)
