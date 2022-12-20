@@ -7,7 +7,7 @@ import (
 	"unicode"
 )
 
-func expect(token string) {
+func expect(token string, tokens TokenizerResult) {
 
 }
 
@@ -32,7 +32,7 @@ func parseExpression() {
 }
 
 func parseStatementPrint() {
-	expect("print")
+	//expect("print")
 
 }
 
@@ -60,36 +60,95 @@ func parseStatement() {
 
 }
 
-func parseBlock() {
-	expect("{")
-	parseBlock()
-	expect("}")
+type TokenType int
+
+const (
+	Terminal     TokenType = 0
+	IntegerValue TokenType = 1
+	BooleanValue TokenType = 2
+	VariableName TokenType = 3
+)
+
+type Token struct {
+	tokenType    TokenType
+	token        string
+	integerValue int
+	booleanValue bool
 }
 
-func parseProgram() {
-	parseBlock()
+type TokenizerResult interface {
+	pop() Token
+	expectTerminal(token string) bool
 }
 
-func isInteger(tokenCandidate string) bool {
-	// TODO: consider returning parsed value as a tuple or struct
-	if _, err := strconv.Atoi(tokenCandidate); err == nil {
-		return true
-	}
+func (tokenList TokenizerResultData) expectTerminal(token string) bool {
+	//tokenList.pop()
 	return false
 }
 
-func isBoolean(tokenCandidate string) bool {
-	return tokenCandidate == BOOLEAN_TRUE || tokenCandidate == BOOLEAN_FALSE
+func (tokenList TokenizerResultData) pop() Token {
+	var value Token
+	value, tokenList = tokenList[0], tokenList[1:]
+	return value
 }
 
-func isVariableName(tokenCandidate string) bool {
+func parseBlock(tokens TokenizerResult) {
+	//token := tokens.pop()
+	// if token.tokenType == Terminal && token.token == OPEN_BLOCK_GROUPING {
+	// 	//start creating struct for block??
+	// }
+	//expect(OPEN_BLOCK_GROUPING)
+	parseStatement()
+	// types: ...
+	//expect(CLOSE_BLOCK_GROUPING)
+}
+
+func parseProgram(tokens TokenizerResult) {
+	parseBlock(tokens)
+}
+
+func isInteger(tokenCandidate string) (bool, Token) {
+	// TODO: consider returning parsed value as a tuple or struct
+	if value, err := strconv.Atoi(tokenCandidate); err == nil {
+		return true, Token{token: tokenCandidate, tokenType: IntegerValue, integerValue: value}
+	}
+	return false, Token{}
+}
+
+func isBoolean(tokenCandidate string) (bool, Token) {
+	if tokenCandidate == BOOLEAN_TRUE {
+		return true, Token{token: tokenCandidate, tokenType: BooleanValue, booleanValue: true}
+	}
+	if tokenCandidate == BOOLEAN_FALSE {
+		return true, Token{token: tokenCandidate, tokenType: BooleanValue, booleanValue: false}
+	}
+	return false, Token{}
+}
+
+func isVariableName(tokenCandidate string) (bool, Token) {
 	// TODO: implement variable format
 	match, _ := regexp.MatchString("^[a-z]([A-Za-z]|[0-9])*$", tokenCandidate)
-	return match
+	if match {
+		return true, Token{token: tokenCandidate, tokenType: VariableName}
+	}
+	return false, Token{}
 }
 
-func isValue(tokenCandidate string) bool {
-	return isInteger(tokenCandidate) || isVariableName(tokenCandidate) || isBoolean(tokenCandidate)
+func isValue(tokenCandidate string) (bool, Token) {
+	isInteger, integerToken := isInteger(tokenCandidate)
+	if isInteger {
+		return true, integerToken
+	}
+	isBoolean, booleanToken := isBoolean(tokenCandidate)
+	if isBoolean {
+		return true, booleanToken
+	}
+	// Order matters
+	isVariableName, variableNameToken := isVariableName(tokenCandidate)
+	if isVariableName {
+		return true, variableNameToken
+	}
+	return false, Token{}
 }
 
 func isAmbiguous(tokenCandidate string) bool {
@@ -107,9 +166,11 @@ func advanceToken() {
 
 }
 
-func tokenize(sourceCode string, terminalTokens StringSet) []string {
+type TokenizerResultData []Token
+
+func tokenize(sourceCode string, terminalTokens StringSet) TokenizerResultData {
 	// TODO: simplify code, use scanner or generic lexer
-	tokenList := make([]string, 0)
+	tokenList := make([]Token, 0)
 
 	currentToken := ""
 	tokenCandidate := ""
@@ -117,11 +178,14 @@ func tokenize(sourceCode string, terminalTokens StringSet) []string {
 		if unicode.IsSpace(character) {
 			if len(currentToken) > 0 {
 				if len(tokenCandidate) > 0 {
-					tokenList = append(tokenList, currentToken)
+					tokenList = append(tokenList, Token{
+						tokenType: Terminal,
+						token:     currentToken,
+					})
 				} else {
 					//TODO: is non-terminal?
-					if isValue(currentToken) {
-						tokenList = append(tokenList, currentToken)
+					if constitutesValue, value := isValue(currentToken); constitutesValue {
+						tokenList = append(tokenList, value)
 					}
 
 					//TODO: error - no token recognized!
@@ -135,19 +199,28 @@ func tokenize(sourceCode string, terminalTokens StringSet) []string {
 			if isTerminal(currentToken, terminalTokens) {
 				tokenCandidate = currentToken
 				if !isAmbiguous(currentToken) {
-					tokenList = append(tokenList, currentToken)
+					tokenList = append(tokenList, Token{
+						tokenType: Terminal,
+						token:     currentToken,
+					})
 					currentToken = ""
 					tokenCandidate = ""
 				}
 			} else {
 				if len(tokenCandidate) > 0 {
-					tokenList = append(tokenList, tokenCandidate)
+					tokenList = append(tokenList, Token{
+						tokenType: Terminal,
+						token:     tokenCandidate,
+					})
 					currentToken = (string)(character)
 				}
 				if isTerminal(currentToken, terminalTokens) {
 					tokenCandidate = currentToken
 					if !isAmbiguous(currentToken) {
-						tokenList = append(tokenList, currentToken)
+						tokenList = append(tokenList, Token{
+							tokenType: Terminal,
+							token:     currentToken,
+						})
 						currentToken = ""
 						tokenCandidate = ""
 					}
@@ -158,7 +231,10 @@ func tokenize(sourceCode string, terminalTokens StringSet) []string {
 	}
 	// Anything remains after the last character, it should be matched
 	if len(tokenCandidate) > 0 {
-		tokenList = append(tokenList, tokenCandidate)
+		tokenList = append(tokenList, Token{
+			tokenType: Terminal,
+			token:     tokenCandidate,
+		})
 	}
 
 	return tokenList
@@ -184,7 +260,7 @@ var terminalTokens = toSet([]string{
 
 func parse(sourceCode string) (Stmt, error) {
 
-	//tokensArray := tokenize(sourceCode, terminalTokens)
-
+	tokensArray := tokenize(sourceCode, terminalTokens)
+	parseProgram(tokensArray)
 	return nil, errors.New("Not implemented")
 }
