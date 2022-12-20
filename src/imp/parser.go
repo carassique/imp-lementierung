@@ -23,15 +23,27 @@ func parseExpressionBoolean() {
 
 }
 
-func parseExpressionInteger() {
-
+func parseExpressionInteger(tokens TokenizerStream) (Exp, error) {
+	token := tokens.pop()
+	if token.tokenType == IntegerValue {
+		return number(token.integerValue), nil
+	}
+	return nil, errors.New("Could not parse integer")
 }
 
-func parseExpression() {
+func parseExpression(tokens TokenizerStream) (Exp, error) {
+	return parseExpressionInteger(tokens)
 
+	//TODO: extend
 }
 
-func parseStatementPrint() {
+func parseStatementPrint(tokens TokenizerStream) (Stmt, error) {
+	tokens.expectTerminal(PRINT)
+	exp, error := parseExpression(tokens)
+	//TODO: handle error
+	return (Stmt)(Print{
+		exp: exp,
+	}), error
 	//expect("print")
 
 }
@@ -56,8 +68,8 @@ func parseStatementSequence() {
 
 }
 
-func parseStatement() {
-
+func parseStatement(tokens TokenizerStream) (Stmt, error) {
+	return parseStatementPrint(tokens)
 }
 
 type TokenType int
@@ -76,35 +88,48 @@ type Token struct {
 	booleanValue bool
 }
 
+type TokenizerStream struct {
+	tokenList *TokenizerResultData
+}
+
 type TokenizerResult interface {
 	pop() Token
 	expectTerminal(token string) bool
 }
 
-func (tokenList TokenizerResultData) expectTerminal(token string) bool {
-	//tokenList.pop()
+func (tokenList *TokenizerStream) expectTerminal(token string) bool {
+	tokenFromList := tokenList.pop()
+	if tokenFromList.tokenType == Terminal && tokenFromList.token == token {
+		return true
+	}
 	return false
 }
 
-func (tokenList TokenizerResultData) pop() Token {
+func (tokenList *TokenizerStream) pop() Token {
 	var value Token
-	value, tokenList = tokenList[0], tokenList[1:]
+	deref := *tokenList.tokenList
+	value = deref[0]
+	*tokenList.tokenList = deref[1:]
 	return value
 }
 
-func parseBlock(tokens TokenizerResult) {
+func parseBlock(tokens TokenizerStream) (Stmt, error) {
 	//token := tokens.pop()
 	// if token.tokenType == Terminal && token.token == OPEN_BLOCK_GROUPING {
 	// 	//start creating struct for block??
 	// }
 	//expect(OPEN_BLOCK_GROUPING)
-	parseStatement()
+	isValid := tokens.expectTerminal(OPEN_BLOCK_GROUPING)
+	stmt, error := parseStatement(tokens)
+	isValid = tokens.expectTerminal(CLOSE_BLOCK_GROUPING)
+	println(isValid)
+	return stmt, error
 	// types: ...
 	//expect(CLOSE_BLOCK_GROUPING)
 }
 
-func parseProgram(tokens TokenizerResult) {
-	parseBlock(tokens)
+func parseProgram(tokens TokenizerStream) (Stmt, error) {
+	return parseBlock(tokens)
 }
 
 func isInteger(tokenCandidate string) (bool, Token) {
@@ -261,6 +286,8 @@ var terminalTokens = toSet([]string{
 func parse(sourceCode string) (Stmt, error) {
 
 	tokensArray := tokenize(sourceCode, terminalTokens)
-	parseProgram(tokensArray)
-	return nil, errors.New("Not implemented")
+	ast, error := parseProgram(TokenizerStream{
+		tokenList: &tokensArray,
+	})
+	return ast, error
 }

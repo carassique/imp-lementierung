@@ -7,10 +7,12 @@ import (
 )
 
 func TestParser(t *testing.T) {
-	program, error := parse("{ print 1 }")
+	program, error := parse("{ print 1337 }")
 	typeMap := make(map[string]Type)
 	assert.NoError(t, error)
 	assert.True(t, program.check(typeMap))
+	stateMap := make(map[string]Val)
+	program.eval(stateMap)
 }
 
 func TestTokenizer(t *testing.T) {
