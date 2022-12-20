@@ -15,12 +15,12 @@ func accept() {
 
 }
 
-func parseExpressionVariable() {
-
+func parseExpressionVariable(tokens TokenizerStream) (Exp, error) {
+	return nil, nil
 }
 
-func parseExpressionBoolean() {
-
+func parseExpressionBoolean(tokens TokenizerStream) (Exp, error) {
+	return nil, nil
 }
 
 func parseExpressionInteger(tokens TokenizerStream) (Exp, error) {
@@ -31,11 +31,74 @@ func parseExpressionInteger(tokens TokenizerStream) (Exp, error) {
 	return nil, errors.New("Could not parse integer")
 }
 
-func parseExpression(tokens TokenizerStream) (Exp, error) {
-	return parseExpressionInteger(tokens)
+// func parseExpressionGrouping(tokens TokenizerStream) (Exp, error) {
+// 	tokens.expectTerminal(OPEN_BLOCK_GROUPING)
 
-	//TODO: extend
+// }
+
+// func parseExpressionNot(tokens TokenizerStream) (Exp, error) {
+
+// }
+
+// func parseExpressionMultRhs(tokens TokenizerStream) (Exp, error) {
+
+//}
+
+func parseExpressionMult(tokens TokenizerStream) (Exp, error) {
+	return parseExpressionValue(tokens)
 }
+
+func parseExpressionPlusRhs(tokens TokenizerStream) (Exp, error) {
+	token := tokens.peek()
+	if token.tokenType == Terminal && token.token == ADD {
+		tokens.pop()
+		return parseExpressionPlus(tokens)
+	}
+	// else skip
+	//TODO: remove error
+	return nil, errors.New("Could not parse PlusRhs")
+}
+
+func parseExpressionPlus(tokens TokenizerStream) (Exp, error) {
+	lhs, lerr := parseExpressionMult(tokens)
+	rhs, rerr := parseExpressionPlusRhs(tokens)
+	if rerr == nil {
+		return Plus{
+			lhs,
+			rhs,
+		}, nil
+	} else {
+		return lhs, lerr
+	}
+}
+
+func parseExpression(tokens TokenizerStream) (Exp, error) {
+	return parseExpressionPlus(tokens)
+}
+
+func parseExpressionValue(tokens TokenizerStream) (Exp, error) {
+	firstToken := tokens.peek()
+	switch firstToken.tokenType {
+	case IntegerValue:
+		return parseExpressionInteger(tokens)
+	case BooleanValue:
+		return parseExpressionBoolean(tokens)
+	case VariableName:
+		return parseExpressionVariable(tokens)
+	}
+	return nil, errors.New("Could not parse value")
+}
+
+// func parseLeafExpression(tokens TokenizerStream) (Exp, error) {
+
+// 		switch firstToken.token {
+// 		case OPEN_BLOCK_GROUPING:
+// 			return parseExpressionGrouping(tokens)
+// 		case NOT:
+// 			return parseExpressionNot(tokens)
+// 		}
+// 	}
+// }
 
 func parseStatementPrint(tokens TokenizerStream) (Stmt, error) {
 	tokens.expectTerminal(PRINT)
@@ -48,8 +111,17 @@ func parseStatementPrint(tokens TokenizerStream) (Stmt, error) {
 
 }
 
-func parseStatementIfThenElse() {
-
+func parseStatementIfThenElse(tokens TokenizerStream) (Stmt, error) {
+	tokens.expectTerminal(IF)
+	condition, error := parseExpression(tokens)
+	thenBlock, error := parseBlock(tokens)
+	tokens.expectTerminal(ELSE)
+	elseBlock, error := parseBlock(tokens)
+	return IfThenElse{
+		cond:     condition,
+		thenStmt: thenBlock,
+		elseStmt: elseBlock,
+	}, error
 }
 
 func parseStatementWhile() {
@@ -94,6 +166,7 @@ type TokenizerStream struct {
 
 type TokenizerResult interface {
 	pop() Token
+	peek() Token
 	expectTerminal(token string) bool
 }
 
@@ -103,6 +176,10 @@ func (tokenList *TokenizerStream) expectTerminal(token string) bool {
 		return true
 	}
 	return false
+}
+
+func (tokenList *TokenizerStream) peek() Token {
+	return (*tokenList.tokenList)[0]
 }
 
 func (tokenList *TokenizerStream) pop() Token {

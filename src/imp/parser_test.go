@@ -7,7 +7,11 @@ import (
 )
 
 func TestParser(t *testing.T) {
+	// parse("{ print 1337 }")
 	program, error := parse("{ print 1337 }")
+
+	program, error = parse("{ print 7 + 2 }")
+	assert.NoError(t, error)
 	typeMap := make(map[string]Type)
 	assert.NoError(t, error)
 	assert.True(t, program.check(typeMap))

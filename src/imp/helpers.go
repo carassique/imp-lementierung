@@ -29,6 +29,46 @@ exp ::= 0 | 1 | -1 | ...     -- Integers
      | vars                  -- Variables
 */
 
+/*
+	Precedence rules:
+	(numeric) == < + * ()
+	(boolean) == || && ! ()
+	a || b && c
+	[dexp rhs[dexp rhs[dexp]]]
+	but wrong operator precedence...
+	exp ::= equal
+	equal::= equal == or | or
+	or ::= or || and | and
+	and ::= and && less | less
+	less ::= less < plus | plus
+	plus ::= plus + mult | mult
+	mult ::= mult * det | det
+	det ::=  var | num | (exp) | !exp
+
+	Normalize:
+	plus ::= mult plusRhs
+	plusRhs::= + plus |
+	mult ::= det multRhs
+	multRhs ::= * det mulRhs |
+
+	Normalized expression grammar
+	exp ::= dexp | dexp rhs
+	dexp ::=
+		| val
+		| ! dexp
+		| ( dexp )
+
+	val ::= 0 | 1 | -1 | ...
+		| "true" | "false"
+		| vars
+
+	rhs ::= + exp
+		|	* exp
+		|	|| exp
+		| 	< exp
+
+*/
+
 func mkInt(x int) Val {
 	return Val{flag: ValueInt, valI: x}
 }
