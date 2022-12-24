@@ -16,7 +16,11 @@ func accept() {
 }
 
 func parseExpressionVariable(tokens TokenizerStream) (Exp, error) {
-	return nil, nil
+	token := tokens.pop()
+	if token.tokenType == VariableName {
+		return Var(token.token), nil
+	}
+	return nil, errors.New("Could not parse variable name")
 }
 
 func parseExpressionBoolean(tokens TokenizerStream) (Exp, error) {
