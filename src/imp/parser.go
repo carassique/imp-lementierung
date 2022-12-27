@@ -283,6 +283,7 @@ type TokenizerResultData []Token
 
 func tokenize(sourceCode string, terminalTokens StringSet) TokenizerResultData {
 	// TODO: simplify code, use scanner or generic lexer
+	// TODO: write tests and fix issues
 	tokenList := make([]Token, 0)
 
 	currentToken := ""
