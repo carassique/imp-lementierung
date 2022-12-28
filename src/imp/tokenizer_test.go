@@ -6,29 +6,25 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func tokens(tokens ...Token) TokenizerResultData {
-	return (TokenizerResultData)(tokens)
+func TestTerminals(t *testing.T) {
+	t.Log("Test terminal tokens")
+	assertTokensMatch(t, "= ", terminal(ASSIGNMENT))
+	assertTokensMatch(t, "== ", terminal(EQUALS))
+	assertTokensMatch(t, "while ", terminal(WHILE))
+	assertTokensMatch(t, "while = ==", terminal(WHILE), terminal(ASSIGNMENT), terminal(EQUALS))
+	assertTokensMatch(t, "===", terminal(EQUALS), terminal(ASSIGNMENT)) //TODO: consider
+	assertTokensMatch(t, "while:=print==if<=", terminal(WHILE), terminal(DECLARATION),
+		terminal(PRINT), terminal(EQUALS), terminal(IF),
+		terminal(LESS_THAN), terminal(ASSIGNMENT))
 }
 
-func variable(name string) Token {
-	return Token{
-		tokenType: VariableName,
-		token:     name,
-	}
-}
-
-func openExpressionGrouping() Token {
-	return Token{
-		tokenType: Terminal,
-		token:     OPEN_EXPRESSION_GROUPING,
-	}
-}
-
-func closeExpressionGrouping() Token {
-	return Token{
-		tokenType: Terminal,
-		token:     CLOSE_EXPRESSION_GROUPING,
-	}
+func TestStrangeVariableNames(t *testing.T) {
+	t.Log("Test strange variable names")
+	assertTokensMatch(t, "something123", variable("something123"))
+	assertTokensMatch(t, "somethingwhile", variable("somethingwhile"))
+	assertTokensMatch(t, "whileSomething", variable("whileSomething"))
+	assertTokensMatch(t, "while something", terminal(WHILE), variable("something"))
+	assertTokensMatch(t, "while\nsomething", terminal(WHILE), variable("something"))
 }
 
 func TestVariable(t *testing.T) {
