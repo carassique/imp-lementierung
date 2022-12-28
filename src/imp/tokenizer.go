@@ -52,7 +52,7 @@ func isBoolean(tokenCandidate string) (bool, Token) {
 	if tokenCandidate == BOOLEAN_FALSE {
 		return true, Token{token: tokenCandidate, tokenType: BooleanValue, booleanValue: false}
 	}
-	return false, Token{}
+	return false, noMatch(tokenCandidate)
 }
 
 func isVariableName(tokenCandidate string) (bool, Token) {
@@ -112,11 +112,14 @@ func makeToken(tokenCandidate string, matchers TokenCandidateMatchers) (bool, To
 	if len(tokenCandidate) == 0 || len(matchers) == 0 {
 		return false, noMatch("")
 	}
-	ok, token := matchers[0](tokenCandidate) //TODO: consider match preference
-	if token.token != tokenCandidate {
-		return false, noMatch(tokenCandidate)
+
+	for _, matcher := range matchers {
+		ok, token := matcher(tokenCandidate) //TODO: consider match preference
+		if ok && token.token == tokenCandidate {
+			return ok, token
+		}
 	}
-	return ok, token
+	return false, noMatch(tokenCandidate)
 }
 
 func terminalPrefixMatcher(tokenCandidate string) bool {
@@ -147,6 +150,19 @@ func variablePrefixMatcher(tokenCandidate string) (bool, Token) {
 	return isVariableName(tokenCandidate)
 }
 
+func booleanPrefixMatcher(tokenCandidate string) (bool, Token) {
+	ok, token := isBoolean(tokenCandidate)
+	if !ok {
+		prefixTrue := strings.HasPrefix(BOOLEAN_TRUE, tokenCandidate)
+		prefixFalse := strings.HasPrefix(BOOLEAN_FALSE, tokenCandidate)
+
+		if prefixTrue || prefixFalse {
+			return true, booleanToken(prefixTrue)
+		}
+	}
+	return ok, token
+}
+
 func terminalMatcher(tokenCandidate string) (bool, Token) {
 	// What is actually required is a prefix (possibility) matcher, not identity matcher
 	if isTerminal(tokenCandidate, terminalTokens) {
@@ -165,6 +181,7 @@ func allMatchers() TokenCandidateMatchers {
 	matchers := TokenCandidateMatchers{
 		terminalPrefixMatcher2,
 		integerPrefixMatcher,
+		booleanPrefixMatcher, //Booleans should match before variable names
 		variablePrefixMatcher,
 	}
 	return matchers

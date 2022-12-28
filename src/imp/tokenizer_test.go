@@ -17,10 +17,17 @@ func TestTerminals(t *testing.T) {
 		terminal(PRINT), terminal(EQUALS), terminal(IF),
 		terminal(LESS_THAN), terminal(ASSIGNMENT))
 
-	assertTokensResultMatch(t, "", TokenizerResultData{})
-	assertTokensResultMatch(t, "whi", TokenizerResultData{})
+	assertTokensEmpty(t, "")
+	assertTokensMatch(t, "whi", variable("whi"))
 
 	assertTokensMatch(t, "whilewhi=", variable("whilewhi"), terminal(ASSIGNMENT))
+}
+
+func TestBooleans(t *testing.T) {
+	t.Log("Test boolean literals")
+	assertTokensMatch(t, "true", booleanToken(true))
+	assertTokensMatch(t, "false", booleanToken(false))
+	assertTokensMatch(t, "tru", variable("tru"))
 }
 
 func TestNumbers(t *testing.T) {
@@ -47,7 +54,7 @@ func TestVariable(t *testing.T) {
 	assertTokensMatch(t, " test", variableToken)
 	assertTokensMatch(t, "test ", variableToken)
 	assertTokensMatch(t, "testWithNumeric123", variable("testWithNumeric123"))
-
+	assertTokensEmpty(t, "123name")
 	//TODO: test illegal variable names here or in parser?
 	//split variable names "vari ablename"
 	//illegal format "123name"
@@ -86,6 +93,10 @@ func TestExpressionGrouping(t *testing.T) {
 
 func assertTokensMatch(t *testing.T, sourceCode string, expectedTokens ...Token) {
 	assertTokensResultMatch(t, sourceCode, tokens(expectedTokens...))
+}
+
+func assertTokensEmpty(t *testing.T, sourceCode string) {
+	assertTokensResultMatch(t, sourceCode, TokenizerResultData{})
 }
 
 func assertTokensResultMatch(t *testing.T, sourceCode string, expectedTokens TokenizerResultData) {

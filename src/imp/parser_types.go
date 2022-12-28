@@ -1,13 +1,13 @@
 package imp
 
-type TokenType int
+type TokenType string
 
 const (
-	Terminal     TokenType = 0
-	IntegerValue TokenType = 1
-	BooleanValue TokenType = 2
-	VariableName TokenType = 3
-	Error        TokenType = 4
+	Terminal     TokenType = "Terminal"
+	IntegerValue TokenType = "IntegerValue"
+	BooleanValue TokenType = "BooleanValue"
+	VariableName TokenType = "VariableName"
+	Error        TokenType = "Error"
 )
 
 type Token struct {

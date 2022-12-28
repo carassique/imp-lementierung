@@ -20,6 +20,18 @@ func terminal(value string) Token {
 	}
 }
 
+func booleanToken(value bool) Token {
+	token := BOOLEAN_FALSE
+	if value {
+		token = BOOLEAN_TRUE
+	}
+	return Token{
+		tokenType:    BooleanValue,
+		token:        token,
+		booleanValue: value,
+	}
+}
+
 func integer(value int) Token {
 	return Token{
 		tokenType:    IntegerValue,
