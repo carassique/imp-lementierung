@@ -54,8 +54,17 @@ func TestVariable(t *testing.T) {
 	assertTokensMatch(t, " test", variableToken)
 	assertTokensMatch(t, "test ", variableToken)
 	assertTokensMatch(t, "testWithNumeric123", variable("testWithNumeric123"))
-	assertTokensEmpty(t, "123name")
+
+	assertTokensMatch(t, "trueThat", variable("trueThat"))
+
+	//assertTokensEmpty(t, "123name")
 	//TODO: test illegal variable names here or in parser?
+	//go's own parser seems to roll with valid Integer,VariableName tokens,
+	//and invalidates them during parsing
+	//so maybe leave it as is
+	//if tokens without delimiters are permitted (e.g. "(123)" instead of "( 123 )"),
+	//then recognizing fused tokens in lexer is necessary and inevitable?
+
 	//split variable names "vari ablename"
 	//illegal format "123name"
 }
@@ -89,6 +98,21 @@ func TestExpressionGrouping(t *testing.T) {
 	assertTokensResultMatch(t, "(test) ", variableNameInParenthesisTokens)
 	assertTokensResultMatch(t, " ( test ) ", variableNameInParenthesisTokens)
 	assertTokensResultMatch(t, "(test  )", variableNameInParenthesisTokens)
+
+	t.Log("Parenthesis and literals")
+	assertTokensMatch(t, "(test=(-123+-0)&&",
+		terminal(OPEN_EXPRESSION_GROUPING),
+		variable("test"), terminal(ASSIGNMENT),
+		terminal(OPEN_EXPRESSION_GROUPING),
+		integer(-123),
+		terminal(ADD),
+		Token{
+			tokenType:    IntegerValue,
+			token:        "-0",
+			integerValue: 0,
+		},
+		terminal(CLOSE_EXPRESSION_GROUPING),
+		terminal(AND))
 }
 
 func assertTokensMatch(t *testing.T, sourceCode string, expectedTokens ...Token) {
