@@ -1,10 +1,43 @@
 package imp
 
 import (
+	"math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestTerminalsAutomatedAll(t *testing.T) {
+	t.Log("Test all terminal tokens")
+	for _, key := range terminalTokensPriority {
+		assertTokensMatch(t, key, terminal(key))
+		assertTokensMatch(t, " "+key+" ", terminal(key))
+		testedSource := key + " " + key
+		t.Log("Tested source: ", testedSource)
+		assertTokensMatch(t, testedSource, terminal(key), terminal(key))
+	}
+
+	t.Log("Randomize and test two terminals in a row")
+	detRand := rand.New(rand.NewSource(123))
+	for i := 0; i < 100; i++ {
+		tokenClone := make([]string, len(terminalTokensPriority))
+		copy(tokenClone, terminalTokensPriority)
+		detRand.Shuffle(len(tokenClone), func(i, j int) {
+			tokenClone[i], tokenClone[j] = tokenClone[j], tokenClone[i]
+		})
+		for index, key := range terminalTokensPriority {
+			testedSource := key + " " + tokenClone[index]
+			t.Log("Tested source: " + testedSource)
+			assertTokensMatch(t, testedSource,
+				terminal(key), terminal(tokenClone[index]))
+		}
+	}
+}
+
+func TestMisc(t *testing.T) {
+	assertTokensMatch(t, "= =", terminal(ASSIGNMENT), terminal(ASSIGNMENT))
+	assertTokensMatch(t, "== ==", terminal(EQUALS), terminal(EQUALS))
+}
 
 func TestTerminals(t *testing.T) {
 	t.Log("Test terminal tokens")
