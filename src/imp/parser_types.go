@@ -7,6 +7,7 @@ const (
 	IntegerValue TokenType = 1
 	BooleanValue TokenType = 2
 	VariableName TokenType = 3
+	Error        TokenType = 4
 )
 
 type Token struct {

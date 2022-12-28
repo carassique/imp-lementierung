@@ -110,9 +110,13 @@ func matchCandidateToken(tokenCandidate string, matchers TokenCandidateMatchers)
 
 func makeToken(tokenCandidate string, matchers TokenCandidateMatchers) (bool, Token) {
 	if len(tokenCandidate) == 0 || len(matchers) == 0 {
-		return false, Token{}
+		return false, noMatch("")
 	}
-	return matchers[0](tokenCandidate) //TODO: consider match preference
+	ok, token := matchers[0](tokenCandidate) //TODO: consider match preference
+	if token.token != tokenCandidate {
+		return false, noMatch(tokenCandidate)
+	}
+	return ok, token
 }
 
 func terminalPrefixMatcher(tokenCandidate string) bool {
@@ -128,7 +132,7 @@ func terminalPrefixMatcher2(tokenCandidate string) (bool, Token) {
 			return true, terminal(token)
 		}
 	}
-	return false, noMatch()
+	return false, noMatch(tokenCandidate)
 }
 
 func terminalMatcher(tokenCandidate string) (bool, Token) {
@@ -136,7 +140,7 @@ func terminalMatcher(tokenCandidate string) (bool, Token) {
 	if isTerminal(tokenCandidate, terminalTokens) {
 		return true, terminal(tokenCandidate)
 	}
-	return false, noMatch()
+	return false, noMatch(tokenCandidate)
 }
 
 func allPrefixMatchers() TokenCandidatePrefixMatchers {
@@ -168,7 +172,7 @@ func anyFullMatches(word string, matchers ...TokenCandidateMatcher) (bool, Token
 			return ok, token
 		}
 	}
-	return false, noMatch()
+	return false, noMatch(word)
 }
 
 func tokenize(sourcecode string, terminalTokens StringSet) TokenizerResultData {
@@ -204,6 +208,7 @@ func tokenize(sourcecode string, terminalTokens StringSet) TokenizerResultData {
 				tokenList = append(tokenList, nextToken)
 			} else {
 				// TODO error
+
 			}
 			// Rematch with this character as first
 			tokenCandidate = ""

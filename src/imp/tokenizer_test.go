@@ -16,6 +16,11 @@ func TestTerminals(t *testing.T) {
 	assertTokensMatch(t, "while:=print==if<=", terminal(WHILE), terminal(DECLARATION),
 		terminal(PRINT), terminal(EQUALS), terminal(IF),
 		terminal(LESS_THAN), terminal(ASSIGNMENT))
+
+	assertTokensResultMatch(t, "", TokenizerResultData{})
+	assertTokensResultMatch(t, "whi", TokenizerResultData{})
+
+	assertTokensMatch(t, "whilewhi=", terminal(WHILE), terminal(ASSIGNMENT)) // TODO: consider error
 }
 
 func TestStrangeVariableNames(t *testing.T) {

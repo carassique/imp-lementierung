@@ -4,8 +4,11 @@ func tokens(tokens ...Token) TokenizerResultData {
 	return (TokenizerResultData)(tokens)
 }
 
-func noMatch() Token {
-	return Token{}
+func noMatch(word string) Token {
+	return Token{
+		tokenType: Error,
+		token:     word,
+	}
 }
 
 func terminal(value string) Token {
