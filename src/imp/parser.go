@@ -169,12 +169,15 @@ func advanceToken() {
 
 }
 
-func parse(sourceCode string, context ExecutionContext) (Stmt, error) {
-
-	tokensArray := tokenize(sourceCode, terminalTokens)
+func parseFromTokens(tokens TokenizerResultData, context ExecutionContext) (Stmt, error) {
 	ast, error := parseProgram(TokenizerStream{
-		tokenList: &tokensArray,
+		tokenList: &tokens,
 		context:   context,
 	})
 	return ast, error
+}
+
+func parse(sourceCode string, context ExecutionContext) (Stmt, error) {
+	tokensArray := tokenize(sourceCode)
+	return parseFromTokens(tokensArray, context)
 }

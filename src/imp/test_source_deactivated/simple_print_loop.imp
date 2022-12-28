@@ -1,1 +1,0 @@
-iterator = 10; while 0 < iterator { iterator = (iterator+(-1)); print iterator }

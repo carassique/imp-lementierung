@@ -100,6 +100,6 @@ func assertTokensEmpty(t *testing.T, sourceCode string) {
 }
 
 func assertTokensResultMatch(t *testing.T, sourceCode string, expectedTokens TokenizerResultData) {
-	tokenList := tokenize(sourceCode, terminalTokens)
+	tokenList := tokenize(sourceCode)
 	assert.Equal(t, expectedTokens, tokenList)
 }

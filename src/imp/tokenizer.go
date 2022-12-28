@@ -206,7 +206,7 @@ func anyFullMatches(word string, matchers ...TokenCandidateMatcher) (bool, Token
 	return false, noMatch(word)
 }
 
-func tokenize(sourcecode string, terminalTokens StringSet) TokenizerResultData {
+func tokenize(sourcecode string) TokenizerResultData {
 	tokenList := make([]Token, 0)
 	candidateMatchers := allMatchers()
 	//fullMatchers := allMatchers()

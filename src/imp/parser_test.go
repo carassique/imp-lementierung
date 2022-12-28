@@ -43,7 +43,9 @@ func testSource(t *testing.T, source string) {
 		out:    make(PrintChannel, 1000),
 		signal: make(SignalChannel, 100),
 	}
-	program, error := parse(source, context)
+	tokens := tokenize(source)
+	t.Log("Tokens: [", tokens, "]")
+	program, error := parseFromTokens(tokens, context)
 	assert.NoError(t, error)
 	typeMap := make(map[string]Type)
 	assert.NoError(t, error)
@@ -67,6 +69,6 @@ func testSource(t *testing.T, source string) {
 
 func TestTokenizer(t *testing.T) {
 	t.Log("Tokenizer test")
-	tokenList := tokenize("print 123 -11 ham Jam true { } = == =", terminalTokens)
+	tokenList := tokenize("print 123 -11 ham Jam true { } = == =")
 	t.Logf("%v", tokenList)
 }
