@@ -20,7 +20,15 @@ func TestTerminals(t *testing.T) {
 	assertTokensResultMatch(t, "", TokenizerResultData{})
 	assertTokensResultMatch(t, "whi", TokenizerResultData{})
 
-	assertTokensMatch(t, "whilewhi=", terminal(WHILE), terminal(ASSIGNMENT)) // TODO: consider error
+	assertTokensMatch(t, "whilewhi=", variable("whilewhi"), terminal(ASSIGNMENT))
+}
+
+func TestNumbers(t *testing.T) {
+	t.Log("Test number literal tokenization")
+	assertTokensMatch(t, "123", integer(123))
+	assertTokensMatch(t, "-123", integer(-123))
+	assertTokensMatch(t, "- 123", integer(123)) //TODO: consider error
+
 }
 
 func TestStrangeVariableNames(t *testing.T) {

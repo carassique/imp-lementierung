@@ -1,5 +1,7 @@
 package imp
 
+import "strconv"
+
 func tokens(tokens ...Token) TokenizerResultData {
 	return (TokenizerResultData)(tokens)
 }
@@ -15,6 +17,14 @@ func terminal(value string) Token {
 	return Token{
 		tokenType: Terminal,
 		token:     value,
+	}
+}
+
+func integer(value int) Token {
+	return Token{
+		tokenType:    IntegerValue,
+		token:        strconv.FormatInt((int64)(value), 10),
+		integerValue: value,
 	}
 }
 

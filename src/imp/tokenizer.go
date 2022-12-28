@@ -42,7 +42,7 @@ func isInteger(tokenCandidate string) (bool, Token) {
 	if value, err := strconv.Atoi(tokenCandidate); err == nil {
 		return true, Token{token: tokenCandidate, tokenType: IntegerValue, integerValue: value}
 	}
-	return false, Token{}
+	return false, noMatch(tokenCandidate)
 }
 
 func isBoolean(tokenCandidate string) (bool, Token) {
@@ -61,7 +61,7 @@ func isVariableName(tokenCandidate string) (bool, Token) {
 	if match {
 		return true, Token{token: tokenCandidate, tokenType: VariableName}
 	}
-	return false, Token{}
+	return false, noMatch(tokenCandidate)
 }
 
 func isValue(tokenCandidate string) (bool, Token) {
@@ -135,6 +135,18 @@ func terminalPrefixMatcher2(tokenCandidate string) (bool, Token) {
 	return false, noMatch(tokenCandidate)
 }
 
+func integerPrefixMatcher(tokenCandidate string) (bool, Token) {
+	if tokenCandidate == "-" {
+		// Account for negative number prefix
+		return true, integer(-0)
+	}
+	return isInteger(tokenCandidate)
+}
+
+func variablePrefixMatcher(tokenCandidate string) (bool, Token) {
+	return isVariableName(tokenCandidate)
+}
+
 func terminalMatcher(tokenCandidate string) (bool, Token) {
 	// What is actually required is a prefix (possibility) matcher, not identity matcher
 	if isTerminal(tokenCandidate, terminalTokens) {
@@ -152,6 +164,8 @@ func allPrefixMatchers() TokenCandidatePrefixMatchers {
 func allMatchers() TokenCandidateMatchers {
 	matchers := TokenCandidateMatchers{
 		terminalPrefixMatcher2,
+		integerPrefixMatcher,
+		variablePrefixMatcher,
 	}
 	return matchers
 }
