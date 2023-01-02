@@ -286,7 +286,7 @@ func testSource(t *testing.T, source string) {
 
 func TestTokenizer(t *testing.T) {
 	t.Log("Tokenizer test")
-	tokenList, err := tokenize("print 123 -11 ham Jam true { } = == =")
+	tokenList, err := tokenize("print 123 -11 ham jam true { } = == =")
 	assert.NoError(t, err)
 	t.Logf("%v", tokenList)
 }

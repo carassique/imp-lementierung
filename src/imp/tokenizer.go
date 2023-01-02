@@ -207,6 +207,12 @@ func anyFullMatches(word string, matchers ...TokenCandidateMatcher) (bool, Token
 	return false, noMatch(word)
 }
 
+// Whitespace and vertical whitespace characters are considered skippable
+func isSkippable(word string) bool {
+	match, _ := regexp.MatchString("^(\\s|\\v){1}\\z", word)
+	return match
+}
+
 func tokenize(sourcecode string) (TokenizerResultData, error) {
 	tokenList := make([]Token, 0)
 	candidateMatchers := allMatchers()
@@ -240,7 +246,9 @@ func tokenize(sourcecode string) (TokenizerResultData, error) {
 				tokenList = append(tokenList, nextToken)
 			} else {
 				// TODO error
-				return tokenList, errors.New("Could not recognize token " + tokenCandidate)
+				if len(tokenCandidate) > 0 && !isSkippable(tokenCandidate) {
+					return tokenList, errors.New("Could not recognize token " + tokenCandidate)
+				}
 			}
 			// Rematch with this character as first
 			tokenCandidate = ""
@@ -250,10 +258,13 @@ func tokenize(sourcecode string) (TokenizerResultData, error) {
 				// Single-character word does not have matching tokens
 				// -> skip if supported whitespace character
 				// otherwise throw error
-				// TODO
-				currentToken = ""
-				tokenCandidate = ""
-				candidateMatchers = allMatchers()
+				if isSkippable(currentToken) {
+					currentToken = ""
+					tokenCandidate = ""
+					candidateMatchers = allMatchers()
+				} else {
+					return tokenList, errors.New("Expected whitespace token, received unrecognized token: " + currentToken)
+				}
 			} else {
 				candidateMatchers = newCandidateMatchers
 				tokenCandidate = currentToken

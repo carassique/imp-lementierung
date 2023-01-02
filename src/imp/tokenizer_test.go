@@ -40,6 +40,17 @@ func TestMisc(t *testing.T) {
 	assertTokensMatch(t, "== ==", terminal(EQUALS), terminal(EQUALS))
 }
 
+func TestSkippableCharacters(t *testing.T) {
+	assert.True(t, isSkippable(" "))
+	assert.True(t, isSkippable("\n"))
+	assert.True(t, isSkippable("	"))
+	assert.True(t, isSkippable("\t"))
+
+	assert.False(t, isSkippable(","))
+	assert.False(t, isSkippable("  "))
+	assert.False(t, isSkippable("="))
+}
+
 func TestTerminals(t *testing.T) {
 	t.Log("Test terminal tokens")
 	assertTokensMatch(t, "= ", terminal(ASSIGNMENT))
@@ -68,8 +79,11 @@ func TestNumbers(t *testing.T) {
 	t.Log("Test number literal tokenization")
 	assertTokensMatch(t, "123", integer(123))
 	assertTokensMatch(t, "-123", integer(-123))
+	assertTokensMatch(t, "-12-3", integer(-12), integer(-3))
 	assertProducesErrorAtToken(t, "- 123")
 	assertProducesErrorAtToken(t, "12,3", integer(12))
+	assertProducesErrorAtToken(t, "-12@3", integer(-12))
+
 }
 
 func TestNumberExpressions(t *testing.T) {
@@ -162,6 +176,9 @@ func TestExpressionGrouping(t *testing.T) {
 func assertProducesErrorAtToken(t *testing.T, sourceCode string, expectedTokens ...Token) {
 	tokens, err := tokenize(sourceCode)
 	assert.Error(t, err)
+	if expectedTokens == nil {
+		expectedTokens = TokenizerResultData{}
+	}
 	assert.Equal(t, (TokenizerResultData)(expectedTokens), tokens)
 }
 
