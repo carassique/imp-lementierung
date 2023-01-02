@@ -13,8 +13,8 @@ func accept() {
 }
 
 func parseExpressionVariable(tokens TokenizerStream) (Exp, error) {
-	token := tokens.pop()
-	if token.tokenType == VariableName {
+	token, err := tokens.pop()
+	if err == nil && token.tokenType == VariableName {
 		return Var(token.token), nil
 	}
 	return nil, errors.New("Could not parse variable name")
@@ -25,8 +25,8 @@ func parseExpressionBoolean(tokens TokenizerStream) (Exp, error) {
 }
 
 func parseExpressionInteger(tokens TokenizerStream) (Exp, error) {
-	token := tokens.pop()
-	if token.tokenType == IntegerValue {
+	token, err := tokens.pop()
+	if err == nil && token.tokenType == IntegerValue {
 		return number(token.integerValue), nil
 	}
 	return nil, errors.New("Could not parse integer")
@@ -50,8 +50,8 @@ func parseExpressionMult(tokens TokenizerStream) (Exp, error) {
 }
 
 func parseExpressionPlusRhs(tokens TokenizerStream) (Exp, error) {
-	token := tokens.peek()
-	if token.tokenType == Terminal && token.token == ADD {
+	token, err := tokens.peek()
+	if err == nil && token.tokenType == Terminal && token.token == ADD {
 		tokens.pop()
 		return parseExpressionPlus(tokens)
 	}
@@ -92,15 +92,18 @@ func parseExpressionGrouping(tokens TokenizerStream) (Exp, error) {
 }
 
 func parseExpressionNegation(tokens TokenizerStream) (Exp, error) {
-	token := tokens.pop()
-	if token.tokenType == Terminal && token.token == NOT {
+	token, err := tokens.pop()
+	if err == nil && token.tokenType == Terminal && token.token == NOT {
 		return parseExpression(tokens)
 	}
 	return nil, errors.New("Could not parse logic negation")
 }
 
 func parseExpressionValue(tokens TokenizerStream) (Exp, error) {
-	firstToken := tokens.peek()
+	firstToken, err := tokens.peek()
+	if err != nil {
+		return nil, errors.New("Token list empty while expecting a token")
+	}
 	switch firstToken.tokenType {
 	case IntegerValue:
 		return parseExpressionInteger(tokens)

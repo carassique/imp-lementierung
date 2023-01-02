@@ -8,6 +8,7 @@
 
 ### Check
 - [ ] (-1) wrapping minus mandatory or not, validate implementation
+- [ ] TODO: check if default parsed order of operations matches requirements, see TestExpressionParser
 
 ## Architecture
 - [ ] Separate ExecutionContext from parser

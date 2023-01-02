@@ -56,6 +56,17 @@ func surroundWithParenthesis(token ...Token) []Token {
 	return wrappedTokenList
 }
 
+func TestExpressionParser(t *testing.T) {
+	testTokensExp(t, plus(number(1), number(2)),
+		integer(1), terminal(ADD), integer(2))
+
+	// TODO: check if default parsed order of operations matches requirements
+	testTokensExp(t, plus(number(1), plus(number(2), number(3))),
+		integer(1), terminal(ADD), integer(2), terminal(ADD), integer(3))
+	testTokensExp(t, plus(plus(number(1), number(2)), number(3)),
+		popen(), integer(1), terminal(ADD), integer(2), pclose(), terminal(ADD), integer(3))
+}
+
 func TestPrintStatement(t *testing.T) {
 	// Notice: different token sequences can result in identical AST
 	testTokens(t, printStatement(variableExpression("myvar")),
@@ -92,6 +103,18 @@ func TestPrintStatement(t *testing.T) {
 		terminal(CLOSE_EXPRESSION_GROUPING),
 	)
 
+}
+
+func testTokensExp(t *testing.T, expectedAst Exp, tokenList ...Token) (Exp, error) {
+	tokenizerResult := (TokenizerResultData)(tokenList)
+	tokenizerStream := TokenizerStream{
+		tokenList: &tokenizerResult,
+		context:   makeDefaultContext(),
+	}
+	exp, err := parseExpression(tokenizerStream)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedAst, exp)
+	return exp, err
 }
 
 func testTokens(t *testing.T, expectedAst Stmt, tokenList ...Token) (Stmt, ExecutionContext, error) {
