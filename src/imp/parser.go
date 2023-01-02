@@ -139,15 +139,18 @@ func parseExpressionValue(tokens TokenizerStream) (Exp, error) {
 // }
 
 func parseStatementPrint(tokens TokenizerStream) (Stmt, error) {
-	tokens.expectTerminal(PRINT)
-	exp, error := parseExpression(tokens)
-	//TODO: handle error
+	_, err := tokens.expectTerminal(PRINT)
+	if err != nil {
+		return nil, err
+	}
+	exp, err := parseExpression(tokens)
+	if err != nil {
+		return nil, err
+	}
 	return (Stmt)(Print{
 		exp: exp,
 		out: tokens.context.out,
-	}), error
-	//expect("print")
-
+	}), err
 }
 
 func parseStatementIfThenElse(tokens TokenizerStream) (Stmt, error) {
@@ -182,10 +185,6 @@ func parseStatementWhile() {
 
 }
 
-func parseStatementSequence() {
-
-}
-
 func parseStatementVariableDeclarationOrAssignment(tokens TokenizerStream) (Stmt, error) {
 	// TODO: implement fork assignment/declaration
 	variable, err := parseVariable(tokens)
@@ -212,7 +211,7 @@ func parseStatementVariableDeclarationOrAssignment(tokens TokenizerStream) (Stmt
 	return nil, errors.New("Parsing variable declaration or assignment failed")
 }
 
-func parseConcreteStatement(tokens TokenizerStream) (Stmt, error) {
+func parseStatementConcrete(tokens TokenizerStream) (Stmt, error) {
 	token, err := tokens.peek()
 	if err != nil {
 		return nil, errors.New("Expected statement, received nothing")
@@ -225,7 +224,7 @@ func parseConcreteStatement(tokens TokenizerStream) (Stmt, error) {
 }
 
 func parseStatement(tokens TokenizerStream) (Stmt, error) {
-	stmt1, err1 := parseConcreteStatement(tokens)
+	stmt1, err1 := parseStatementConcrete(tokens)
 	if err1 != nil {
 		return nil, err1
 	}
@@ -238,9 +237,8 @@ func parseStatement(tokens TokenizerStream) (Stmt, error) {
 				return nil, err2
 			}
 			return sequenceStatement(stmt1, stmt2), err2
-		} else {
-			return nil, errors.New("Statement expected, received " + token.token + " of type " + string(token.tokenType))
 		}
+		// else case can be a block, so leave it
 	}
 	return stmt1, err1
 }

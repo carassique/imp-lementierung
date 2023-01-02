@@ -72,6 +72,22 @@ func TestSequenceStatement(t *testing.T) {
 		terminal(STATEMENT_DELIMITER),
 		terminal(PRINT), variable("myvar"),
 	)
+
+	assertTokensProduceProgram(t,
+		sequenceStatement(
+			declarationStatement("myvar", number(5)),
+			sequenceStatement(
+				assignmentStatement("myvar", number(-125)),
+				printStatement(variableExpression("myvar")),
+			),
+		),
+
+		variable("myvar"), terminal(DECLARATION), integer(5),
+		terminal(STATEMENT_DELIMITER),
+		variable("myvar"), terminal(ASSIGNMENT), integer(-125),
+		terminal(STATEMENT_DELIMITER),
+		terminal(PRINT), variable("myvar"),
+	)
 }
 
 func TestDeclarationStatement(t *testing.T) {

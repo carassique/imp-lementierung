@@ -1,0 +1,5 @@
+{
+    myvar := 125;
+    myvar = 25;
+    print myvar
+}
