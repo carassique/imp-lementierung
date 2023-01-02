@@ -29,21 +29,21 @@
 
 - [ ] prog      ::= block
 - [ ] block     ::= "{" statement "}"
-- [ ] statement ::=  statement ";" statement           -- Command sequence
-- [ ]            |  vars ":=" exp                     -- Variable declaration
-- [ ]            |  vars "=" exp                      -- Variable assignment
-- [ ]            |  "while" exp block                 -- While
-- [ ]            |  "if" exp block "else" block       -- If-then-else
-- [ ]            |  "print" exp                       -- Print
+- [x] statement ::=  statement ";" statement           -- Command sequence
+- [x]            |  vars ":=" exp                     -- Variable declaration
+- [x]            |  vars "=" exp                      -- Variable assignment
+- [x]            |  "while" exp block                 -- While
+- [x]            |  "if" exp block "else" block       -- If-then-else
+- [x]            |  "print" exp                       -- Print
 
 - [x] exp ::= 0 | 1 | -1 | ...     -- Integers
 - [x]     | "true" | "false"      -- Booleans
 - [x]     | exp "+" exp           -- Addition
-- [ ]     | exp "*" exp           -- Multiplication
-- [ ]     | exp "||" exp          -- Disjunction
+- [x]     | exp "*" exp           -- Multiplication
+- [x]     | exp "||" exp          -- Disjunction
 - [x]     | exp "&&" exp          -- Conjunction
 - [x]     | "!" exp               -- Negation
 - [ ]     | exp "==" exp          -- Equality test
-- [ ]     | exp "<" exp           -- Lesser test
-- [ ]     | "(" exp ")"           -- Grouping of expressions
-- [ ]     | vars                  -- Variables
+- [x]     | exp "<" exp           -- Lesser test
+- [x]     | "(" exp ")"           -- Grouping of expressions
+- [x]     | vars                  -- Variables

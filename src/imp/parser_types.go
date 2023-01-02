@@ -41,6 +41,15 @@ type InfixOperator struct {
 	terminal       string
 	higherPriority *InfixOperator
 }
+type InfixOperators struct {
+	initialized bool
+	plus        InfixOperator
+	mult        InfixOperator
+	or          InfixOperator
+	and         InfixOperator
+	equals      InfixOperator
+	lessThan    InfixOperator
+}
 
 func (tokenList *TokenizerStream) peekTokenType(tokenType TokenType) (Token, error) {
 	if tokenList.isEmpty() {

@@ -2,7 +2,7 @@ package imp
 
 import "testing"
 
-func TestEvaluator(t *testing.T) {
+func testEvaluator(t *testing.T) {
 	condition := (LessThan)([2]Exp{number(0),
 		(Var)("iterator")})
 

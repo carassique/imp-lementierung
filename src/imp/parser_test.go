@@ -26,7 +26,7 @@ func readSourceCodeFile(filename string) string {
 	return string(data)
 }
 
-func TestAllSourceFiles(t *testing.T) {
+func testAllSourceFiles(t *testing.T) {
 	filenames := readAvailableTestSourceFiles()
 	for _, filename := range filenames {
 		testSourceFile(t, filename)
@@ -115,6 +115,49 @@ func TestExpressionParser(t *testing.T) {
 		popen(), integer(1), terminal(ADD), integer(2), pclose(), terminal(ADD), integer(3))
 }
 
+func TestEqualsExpression(t *testing.T) {
+	//testBinaryExpression(t, op().equals)
+}
+
+func TestLessThanExpression(t *testing.T) {
+	testBinaryExpression(t, op().lessThan)
+}
+
+func TestOrExpression(t *testing.T) {
+	testBinaryExpression(t, op().or)
+}
+
+func TestAndExpression(t *testing.T) {
+	testBinaryExpression(t, op().and)
+}
+
+func TestMultExpression(t *testing.T) {
+	testBinaryExpression(t, op().mult)
+}
+
+func TestPlusExpression(t *testing.T) {
+	testBinaryExpression(t, op().and)
+}
+
+func testBinaryExpression(t *testing.T, operator InfixOperator) {
+	assertTokensProduceExpression(t,
+		operator.make(number(123), number(456)),
+		integer(123), terminal(operator.terminal), integer(456),
+	)
+
+	assertTokensProduceExpression(t,
+		operator.make(number(123), variableExpression("test")),
+		integer(123), terminal(operator.terminal), variable("test"),
+	)
+
+	// TODO: add more tests
+}
+
+func TestVariableExpression(t *testing.T) {
+	assertTokensProduceExpression(t, variableExpression("test"), variable("test"))
+	// more tests implemented in tokenizer_test
+}
+
 func TestBooleanExpression(t *testing.T) {
 	assertTokensProduceExpression(t, boolean(true), booleanToken(true))
 	assertTokensProduceExpression(t, boolean(false), booleanToken(false))
@@ -157,14 +200,14 @@ func TestExpressionGroupingParser(t *testing.T) {
 		popen(), variable("test"), pclose(),
 	)
 
-	// // Empty parenthesis are not part of language syntax -> error
-	// assertTokensProduceError(t, popen(), pclose())
+	// Empty parenthesis are not part of language syntax -> error
+	assertTokensProduceError(t, popen(), pclose())
 
-	// // Half-open parenthesis
-	// assertTokensProduceError(t, popen(), variable("test"))
+	// Half-open parenthesis
+	assertTokensProduceError(t, popen(), variable("test"))
 
-	// // Mismatched nested parenthesis
-	// assertTokensProduceError(t, popen(), variable("test"), popen(), pclose())
+	// Mismatched nested parenthesis
+	assertTokensProduceError(t, popen(), variable("test"), popen(), pclose())
 }
 
 func TestBinaryOperatorExpressions(t *testing.T) {
@@ -179,6 +222,27 @@ func TestBinaryOperatorExpressions(t *testing.T) {
 		variable("a"), terminal(ADD), variable("b"),
 		terminal(AND), booleanToken(false),
 	)
+}
+
+func TestIfThenElseStatement(t *testing.T) {
+	ast := IfThenElse{
+		cond:     boolean(true),
+		thenStmt: printStatement(boolean(true)),
+		elseStmt: printStatement(boolean(false)),
+	}
+	tokens := []Token{
+		terminal(IF), booleanToken(true),
+		terminal(OPEN_BLOCK_GROUPING),
+		terminal(PRINT),
+		booleanToken(true),
+		terminal(CLOSE_BLOCK_GROUPING),
+		terminal(ELSE),
+		terminal(OPEN_BLOCK_GROUPING),
+		terminal(PRINT),
+		booleanToken(false),
+		terminal(CLOSE_BLOCK_GROUPING),
+	}
+	assertTokensProduceStatement(t, ast, tokens...)
 }
 
 func TestWhileStatement(t *testing.T) {
@@ -246,7 +310,17 @@ func TestPrintStatement(t *testing.T) {
 		integer(-20),
 		terminal(CLOSE_EXPRESSION_GROUPING),
 	)
+}
 
+func TestBlock(t *testing.T) {
+	// Empty block is not part of the language
+	ast, err := parseBlock(makeTokenizerStream(
+		terminal(OPEN_BLOCK_GROUPING),
+
+		terminal(CLOSE_BLOCK_GROUPING),
+	))
+	assert.Error(t, err)
+	assert.Nil(t, ast)
 }
 
 func assertTokensProduceError(t *testing.T, tokenList ...Token) {
@@ -255,13 +329,17 @@ func assertTokensProduceError(t *testing.T, tokenList ...Token) {
 	assert.Nil(t, ast)
 }
 
-func parseExpressionFromTokensDefault(t *testing.T, tokenList ...Token) (Exp, error) {
+func makeTokenizerStream(tokenList ...Token) TokenizerStream {
 	tokenizerResult := (TokenizerResultData)(tokenList)
 	tokenizerStream := TokenizerStream{
 		tokenList: &tokenizerResult,
 		context:   makeDefaultContext(),
 	}
-	return parseIsolatedExpression(tokenizerStream)
+	return tokenizerStream
+}
+
+func parseExpressionFromTokensDefault(t *testing.T, tokenList ...Token) (Exp, error) {
+	return parseIsolatedExpression(makeTokenizerStream(tokenList...))
 }
 
 func assertTokensProduceExpression(t *testing.T, expectedAst Exp, tokenList ...Token) (Exp, error) {

@@ -65,53 +65,7 @@ func parseExpressionGeneric(tokens TokenizerStream, operator InfixOperator) (Exp
 }
 
 func parseExpressionBinaryOperator(tokens TokenizerStream) (Exp, error) {
-	multiply := InfixOperator{
-		make: func(lhs, rhs Exp) Exp {
-			return Mult{
-				lhs,
-				rhs,
-			}
-		},
-		terminal: MULTIPLY,
-	}
-	plus := InfixOperator{
-		make: func(lhs, rhs Exp) Exp {
-			return Plus{
-				lhs, rhs,
-			}
-		},
-		terminal:       ADD,
-		higherPriority: &multiply,
-	}
-	and := InfixOperator{
-		make: func(lhs, rhs Exp) Exp {
-			return And{
-				lhs, rhs,
-			}
-		},
-		terminal:       AND,
-		higherPriority: &plus,
-	}
-	or := InfixOperator{
-		make: func(lhs, rhs Exp) Exp {
-			return Or{
-				lhs, rhs,
-			}
-		},
-		terminal:       OR,
-		higherPriority: &and,
-	}
-	lessThan := InfixOperator{
-		make: func(lhs, rhs Exp) Exp {
-			return LessThan{
-				lhs, rhs,
-			}
-		},
-		terminal:       LESS_THAN,
-		higherPriority: &or,
-	}
-
-	return parseExpressionGeneric(tokens, lessThan)
+	return parseExpressionGeneric(tokens, op().lessThan)
 }
 
 func parseIsolatedExpression(tokens TokenizerStream) (Exp, error) {
