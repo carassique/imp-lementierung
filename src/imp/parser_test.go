@@ -137,7 +137,7 @@ func assertTokensProduceStatement(t *testing.T, expectedAst Stmt, tokenList ...T
 		tokenList: &tokenizerResult,
 		context:   makeDefaultContext(),
 	}
-	stmt, err := parseStatement(tokenizerStream)
+	stmt, err := parseConcreteStatement(tokenizerStream)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedAst, stmt)
 	return stmt, err

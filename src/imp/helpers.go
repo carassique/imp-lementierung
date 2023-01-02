@@ -67,6 +67,10 @@ exp ::= 0 | 1 | -1 | ...     -- Integers
 		|	|| exp
 		| 	< exp
 
+
+	Normalized statement grammar:
+	statement ::= concreteStatement | concreteStatement; statement
+	concreteStatement ::= vars ... |
 */
 
 func mkInt(x int) Val {
@@ -138,6 +142,12 @@ func and(x, y Exp) Exp {
 
 func or(x, y Exp) Exp {
 	return (Or)([2]Exp{x, y})
+}
+
+func sequenceStatement(stmt1 Stmt, stmt2 Stmt) Stmt {
+	return Seq{
+		stmt1, stmt2,
+	}
 }
 
 func declarationStatement(name string, exp Exp) Stmt {

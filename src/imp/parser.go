@@ -212,7 +212,7 @@ func parseStatementVariableDeclarationOrAssignment(tokens TokenizerStream) (Stmt
 	return nil, errors.New("Parsing variable declaration or assignment failed")
 }
 
-func parseStatement(tokens TokenizerStream) (Stmt, error) {
+func parseConcreteStatement(tokens TokenizerStream) (Stmt, error) {
 	token, err := tokens.peek()
 	if err != nil {
 		return nil, errors.New("Expected statement, received nothing")
@@ -222,6 +222,27 @@ func parseStatement(tokens TokenizerStream) (Stmt, error) {
 		return parseStatementVariableDeclarationOrAssignment(tokens)
 	}
 	return parseStatementPrint(tokens)
+}
+
+func parseStatement(tokens TokenizerStream) (Stmt, error) {
+	stmt1, err1 := parseConcreteStatement(tokens)
+	if err1 != nil {
+		return nil, err1
+	}
+	token, err := tokens.peek()
+	if err == nil {
+		if token.tokenType == Terminal && token.token == STATEMENT_DELIMITER {
+			tokens.pop()
+			stmt2, err2 := parseStatement(tokens)
+			if err2 != nil {
+				return nil, err2
+			}
+			return sequenceStatement(stmt1, stmt2), err2
+		} else {
+			return nil, errors.New("Statement expected, received " + token.token + " of type " + string(token.tokenType))
+		}
+	}
+	return stmt1, err1
 }
 
 func parseBlock(tokens TokenizerStream) (Stmt, error) {
