@@ -56,6 +56,24 @@ func surroundWithParenthesis(token ...Token) []Token {
 	return wrappedTokenList
 }
 
+func TestSequenceStatement(t *testing.T) {
+	assertTokensProduceStatement(t,
+		sequenceStatement(
+			declarationStatement("myvar", number(5)),
+			sequenceStatement(
+				assignmentStatement("myvar", number(-125)),
+				printStatement(variableExpression("myvar")),
+			),
+		),
+
+		variable("myvar"), terminal(DECLARATION), integer(5),
+		terminal(STATEMENT_DELIMITER),
+		variable("myvar"), terminal(ASSIGNMENT), integer(-125),
+		terminal(STATEMENT_DELIMITER),
+		terminal(PRINT), variable("myvar"),
+	)
+}
+
 func TestDeclarationStatement(t *testing.T) {
 	assertTokensProduceStatement(t,
 		declarationStatement("myvar", number(5)),
@@ -137,7 +155,7 @@ func assertTokensProduceStatement(t *testing.T, expectedAst Stmt, tokenList ...T
 		tokenList: &tokenizerResult,
 		context:   makeDefaultContext(),
 	}
-	stmt, err := parseConcreteStatement(tokenizerStream)
+	stmt, err := parseStatement(tokenizerStream)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedAst, stmt)
 	return stmt, err
