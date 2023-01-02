@@ -10,6 +10,7 @@
 - [ ] check assignment before declaration
 
 ### Check
+- [ ] Verify language specification
 - [ ] (-1) wrapping minus mandatory or not, validate implementation
 - [ ] TODO: check if default parsed order of operations matches requirements, see TestExpressionParser
 - [ ] Tokenizer "12,4" integer test case -> should return error

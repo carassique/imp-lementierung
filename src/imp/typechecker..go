@@ -108,3 +108,12 @@ func (e Or) infer(t TyState) Type {
 	}
 	return TyIllTyped
 }
+
+func (e Equals) infer(t TyState) Type {
+	t1 := e[0].infer(t)
+	t2 := e[1].infer(t)
+	if t1 == TyBool && t2 == TyBool {
+		return TyBool
+	}
+	return TyIllTyped
+}

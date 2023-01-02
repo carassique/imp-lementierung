@@ -116,7 +116,7 @@ func TestExpressionParser(t *testing.T) {
 }
 
 func TestEqualsExpression(t *testing.T) {
-	//testBinaryExpression(t, op().equals)
+	testBinaryExpression(t, op().equals)
 }
 
 func TestLessThanExpression(t *testing.T) {

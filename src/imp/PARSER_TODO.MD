@@ -19,7 +19,7 @@
 - [x]     | exp "||" exp          -- Disjunction
 - [x]     | exp "&&" exp          -- Conjunction
 - [x]     | "!" exp               -- Negation
-- [ ]     | exp "==" exp          -- Equality test
+- [x]     | exp "==" exp          -- Equality test
 - [x]     | exp "<" exp           -- Lesser test
 - [x]     | "(" exp ")"           -- Grouping of expressions
 - [x]     | vars                  -- Variables
@@ -43,7 +43,7 @@
 - [x]     | exp "||" exp          -- Disjunction
 - [x]     | exp "&&" exp          -- Conjunction
 - [x]     | "!" exp               -- Negation
-- [ ]     | exp "==" exp          -- Equality test
+- [x]     | exp "==" exp          -- Equality test
 - [x]     | exp "<" exp           -- Lesser test
 - [x]     | "(" exp ")"           -- Grouping of expressions
 - [x]     | vars                  -- Variables

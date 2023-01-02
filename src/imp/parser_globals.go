@@ -49,7 +49,15 @@ func op() InfixOperators {
 			terminal:       LESS_THAN,
 			higherPriority: &or,
 		}
-		equals := InfixOperator{} // TODO: implement
+		equals := InfixOperator{
+			make: func(lhs, rhs Exp) Exp {
+				return Equals{
+					lhs, rhs,
+				}
+			},
+			terminal:       EQUALS,
+			higherPriority: &lessThan,
+		}
 		initialized := true
 		operators = InfixOperators{
 			initialized: initialized,

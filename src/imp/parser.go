@@ -43,7 +43,8 @@ func parseExpressionGenericRhs(tokens TokenizerStream, operator InfixOperator) (
 		return parseExpressionGeneric(tokens, operator)
 	}
 	// else skip
-	//TODO: remove error
+	//TODO: remove error (or don't - it can be valid, but will be detected by
+	// the token count. See test case TestExpressionGroupingHalfOpenParenthesis)
 	return nil, errors.New("Could not parse Rhs for " + operator.terminal)
 }
 
@@ -65,7 +66,7 @@ func parseExpressionGeneric(tokens TokenizerStream, operator InfixOperator) (Exp
 }
 
 func parseExpressionBinaryOperator(tokens TokenizerStream) (Exp, error) {
-	return parseExpressionGeneric(tokens, op().lessThan)
+	return parseExpressionGeneric(tokens, op().equals)
 }
 
 func parseIsolatedExpression(tokens TokenizerStream) (Exp, error) {

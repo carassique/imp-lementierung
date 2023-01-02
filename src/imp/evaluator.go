@@ -59,6 +59,10 @@ func (decl Decl) eval(s ValState) {
 	s[x] = v
 }
 
+func (exp Equals) eval(s ValState) Val {
+	return mkBool(exp[0].eval(s).valI < exp[1].eval(s).valI) // TOOD: implement checks
+}
+
 func (exp LessThan) eval(s ValState) Val {
 	return mkBool(exp[0].eval(s).valI < exp[1].eval(s).valI) // TOOD: implement checks
 }
