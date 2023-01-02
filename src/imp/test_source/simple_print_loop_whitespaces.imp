@@ -1,0 +1,2 @@
+{ iterator = 10; while 0 < iterator { iterator = ( iterator + ( -1 ) ) ; print iterator }}
+// THIS SHOULD FAIL DUE TO LACK OF DECLARATION

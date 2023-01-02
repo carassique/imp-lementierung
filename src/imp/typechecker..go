@@ -50,8 +50,26 @@ func (a Assign) check(t TyState) bool {
 	Expression type inference
 */
 
-func (x LessThan) infer(t TyState) Type {
-	return TyInt //TODO: implement
+func (e LessThan) infer(t TyState) Type {
+	t1 := e[0].infer(t)
+	t2 := e[1].infer(t)
+	if t1 == TyInt && t2 == TyInt { //TODO: validate spec
+		return TyBool
+	}
+	return TyIllTyped
+}
+
+func (e Equals) infer(t TyState) Type {
+	t1 := e[0].infer(t)
+	t2 := e[1].infer(t)
+
+	if t1 == TyBool && t2 == TyBool { //TODO: validate spec
+		return TyBool
+	}
+	if t1 == TyInt && t2 == TyInt {
+		return TyBool
+	}
+	return TyIllTyped
 }
 
 func (x Var) infer(t TyState) Type {
@@ -101,15 +119,6 @@ func (e And) infer(t TyState) Type {
 }
 
 func (e Or) infer(t TyState) Type {
-	t1 := e[0].infer(t)
-	t2 := e[1].infer(t)
-	if t1 == TyBool && t2 == TyBool {
-		return TyBool
-	}
-	return TyIllTyped
-}
-
-func (e Equals) infer(t TyState) Type {
 	t1 := e[0].infer(t)
 	t2 := e[1].infer(t)
 	if t1 == TyBool && t2 == TyBool {

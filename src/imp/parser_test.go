@@ -26,7 +26,7 @@ func readSourceCodeFile(filename string) string {
 	return string(data)
 }
 
-func testAllSourceFiles(t *testing.T) {
+func TestAllSourceFiles(t *testing.T) {
 	filenames := readAvailableTestSourceFiles()
 	for _, filename := range filenames {
 		testSourceFile(t, filename)
