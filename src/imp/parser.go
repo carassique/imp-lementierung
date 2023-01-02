@@ -88,26 +88,35 @@ func parseExpressionPlusRhs(tokens TokenizerStream) (Exp, error) {
 }
 
 func parseExpressionPlus(tokens TokenizerStream) (Exp, error) {
-
-	idk := InfixOperator{
+	multiply := InfixOperator{
+		make: func(lhs, rhs Exp) Exp {
+			return Mult{
+				lhs,
+				rhs,
+			}
+		},
+		terminal: MULTIPLY,
+	}
+	plus := InfixOperator{
 		make: func(lhs, rhs Exp) Exp {
 			return Plus{
 				lhs, rhs,
 			}
 		},
-		terminal: ADD,
-		higherPriority: &InfixOperator{
-			make: func(lhs, rhs Exp) Exp {
-				return Mult{
-					lhs,
-					rhs,
-				}
-			},
-			terminal:       MULTIPLY,
-			higherPriority: nil,
-		},
+		terminal:       ADD,
+		higherPriority: &multiply,
 	}
-	return parseExpressionGeneric(tokens, idk)
+	lessThan := InfixOperator{
+		make: func(lhs, rhs Exp) Exp {
+			return LessThan{
+				lhs, rhs,
+			}
+		},
+		terminal:       LESS_THAN,
+		higherPriority: &plus,
+	}
+
+	return parseExpressionGeneric(tokens, lessThan)
 	// lhs, lerr := parseExpressionMult(tokens)
 	// rhs, rerr := parseExpressionPlusRhs(tokens)
 	// if rerr == nil {

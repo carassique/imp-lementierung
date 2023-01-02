@@ -1,5 +1,9 @@
 {
     myvar := 125;
     myvar = 25;
+    myvarBool := 5 < 10;
+    print myvarBool;
+    print myvarBool;
+    print myvarBool;
     print myvar
 }
