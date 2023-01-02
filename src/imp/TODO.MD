@@ -6,6 +6,9 @@
 - [ ] Tokenizer non-whitespace delimited token recognition buggy (see simple_print_loop.imp)
 - [ ] while whileSomething tokenizer
 
+## Semantics
+- [ ] check assignment before declaration
+
 ### Check
 - [ ] (-1) wrapping minus mandatory or not, validate implementation
 - [ ] TODO: check if default parsed order of operations matches requirements, see TestExpressionParser

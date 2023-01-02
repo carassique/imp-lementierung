@@ -232,8 +232,23 @@ func parseStatementIfThenElse(tokens TokenizerStream) (Stmt, error) {
 	}, nil
 }
 
-func parseStatementWhile() {
-
+func parseStatementWhile(tokens TokenizerStream) (Stmt, error) {
+	_, err := tokens.expectTerminal(WHILE)
+	if err != nil {
+		return nil, err
+	}
+	exp, err := parseExpression(tokens)
+	if err != nil {
+		return nil, err
+	}
+	block, err := parseBlock(tokens)
+	if err != nil {
+		return nil, err
+	}
+	return (Stmt)(While{
+		cond: exp,
+		stmt: block,
+	}), err
 }
 
 func parseStatementVariableDeclarationOrAssignment(tokens TokenizerStream) (Stmt, error) {
@@ -270,8 +285,15 @@ func parseStatementConcrete(tokens TokenizerStream) (Stmt, error) {
 	switch token.tokenType {
 	case VariableName:
 		return parseStatementVariableDeclarationOrAssignment(tokens)
+	case Terminal:
+		switch token.token {
+		case PRINT:
+			return parseStatementPrint(tokens)
+		case WHILE:
+			return parseStatementWhile(tokens)
+		}
 	}
-	return parseStatementPrint(tokens)
+	return nil, errors.New("Could not parse statement, received " + token.token + " of type " + string(token.tokenType))
 }
 
 func parseStatement(tokens TokenizerStream) (Stmt, error) {
