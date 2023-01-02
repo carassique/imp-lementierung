@@ -81,6 +81,7 @@ type Print struct {
 
 type Bool bool
 type Num int
+type Not Exp
 type Mult [2]Exp
 type Plus [2]Exp
 type And [2]Exp

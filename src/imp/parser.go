@@ -33,29 +33,11 @@ func parseExpressionInteger(tokens TokenizerStream) (Exp, error) {
 	return nil, err
 }
 
-// func parseExpressionGrouping(tokens TokenizerStream) (Exp, error) {
-// 	tokens.expectTerminal(OPEN_BLOCK_GROUPING)
-
-// }
-
-// func parseExpressionNot(tokens TokenizerStream) (Exp, error) {
-
-// }
-
-// func parseExpressionMultRhs(tokens TokenizerStream) (Exp, error) {
-
-//}
-
-func parseExpressionMultRhs(tokens TokenizerStream) (Exp, error) {
-	return nil, nil
-}
-
-func parseExpressionMult(tokens TokenizerStream) (Exp, error) {
-	return parseExpressionValue(tokens)
-}
-
 func parseExpressionGenericRhs(tokens TokenizerStream, operator InfixOperator) (Exp, error) {
 	_, err := tokens.peekTerminal(operator.terminal)
+	// If it does not match terminal, it could mean the following things:
+	// (a) expect rhs for different operator * + etc
+	// (b) there is no rhs, it's a single value
 	if err == nil {
 		tokens.pop()
 		return parseExpressionGeneric(tokens, operator)
@@ -68,8 +50,10 @@ func parseExpressionGenericRhs(tokens TokenizerStream, operator InfixOperator) (
 func parseExpressionGeneric(tokens TokenizerStream, operator InfixOperator) (Exp, error) {
 	var lhs, lerr = (Exp)(nil), (error)(nil)
 	if operator.higherPriority != nil {
+		// Try different lhs
 		lhs, lerr = parseExpressionGeneric(tokens, *operator.higherPriority)
 	} else {
+		// Lhs can only be a value
 		lhs, lerr = parseExpressionValue(tokens)
 	}
 	rhs, rerr := parseExpressionGenericRhs(tokens, operator)
@@ -78,17 +62,6 @@ func parseExpressionGeneric(tokens TokenizerStream, operator InfixOperator) (Exp
 	} else {
 		return lhs, lerr
 	}
-}
-
-func parseExpressionPlusRhs(tokens TokenizerStream) (Exp, error) {
-	_, err := tokens.peekTerminal(ADD)
-	if err == nil {
-		tokens.pop()
-		return parseExpressionBinaryOperator(tokens)
-	}
-	// else skip
-	//TODO: remove error
-	return nil, errors.New("Could not parse PlusRhs")
 }
 
 func parseExpressionBinaryOperator(tokens TokenizerStream) (Exp, error) {
@@ -141,6 +114,16 @@ func parseExpressionBinaryOperator(tokens TokenizerStream) (Exp, error) {
 	return parseExpressionGeneric(tokens, lessThan)
 }
 
+func parseIsolatedExpression(tokens TokenizerStream) (Exp, error) {
+	exp, err := parseExpression(tokens)
+	if err == nil {
+		if !tokens.isEmpty() {
+			return nil, errors.New("some tokens were not consumed")
+		}
+	}
+	return exp, err
+}
+
 func parseExpression(tokens TokenizerStream) (Exp, error) {
 	return parseExpressionBinaryOperator(tokens)
 }
@@ -155,14 +138,19 @@ func parseExpressionGrouping(tokens TokenizerStream) (Exp, error) {
 				return exp, err
 			}
 		}
+		return nil, err
 	}
 	return nil, errors.New("Could not parse expression grouping")
 }
 
 func parseExpressionNegation(tokens TokenizerStream) (Exp, error) {
-	token, err := tokens.pop()
-	if err == nil && token.tokenType == Terminal && token.token == NOT {
-		return parseExpression(tokens)
+	_, err := tokens.expectTerminal(NOT)
+	if err == nil {
+		exp, err := parseExpression(tokens)
+		if err == nil {
+			return not(exp), err
+		}
+		return nil, err
 	}
 	return nil, errors.New("Could not parse logic negation")
 }
@@ -187,19 +175,9 @@ func parseExpressionValue(tokens TokenizerStream) (Exp, error) {
 			return parseExpressionGrouping(tokens)
 		}
 	}
-	return nil, errors.New("Could not parse value")
+	token, _ := tokens.pop()
+	return nil, errors.New("Could not parse value, token: " + token.token + " of type " + string(token.tokenType))
 }
-
-// func parseLeafExpression(tokens TokenizerStream) (Exp, error) {
-
-// 		switch firstToken.token {
-// 		case OPEN_BLOCK_GROUPING:
-// 			return parseExpressionGrouping(tokens)
-// 		case NOT:
-// 			return parseExpressionNot(tokens)
-// 		}
-// 	}
-// }
 
 func parseStatementPrint(tokens TokenizerStream) (Stmt, error) {
 	_, err := tokens.expectTerminal(PRINT)
@@ -348,7 +326,13 @@ func parseBlock(tokens TokenizerStream) (Stmt, error) {
 }
 
 func parseProgram(tokens TokenizerStream) (Stmt, error) {
-	return parseBlock(tokens)
+	ast, err := parseBlock(tokens)
+	if err == nil {
+		if !tokens.isEmpty() {
+			return nil, errors.New("some tokens were not consumed")
+		}
+	}
+	return ast, err
 }
 
 func parseFromTokens(tokens TokenizerResultData, context ExecutionContext) (Stmt, error) {

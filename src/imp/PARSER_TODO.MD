@@ -36,13 +36,13 @@
 - [ ]            |  "if" exp block "else" block       -- If-then-else
 - [ ]            |  "print" exp                       -- Print
 
-- [ ] exp ::= 0 | 1 | -1 | ...     -- Integers
-- [ ]     | "true" | "false"      -- Booleans
-- [X]     | exp "+" exp           -- Addition
+- [x] exp ::= 0 | 1 | -1 | ...     -- Integers
+- [x]     | "true" | "false"      -- Booleans
+- [x]     | exp "+" exp           -- Addition
 - [ ]     | exp "*" exp           -- Multiplication
 - [ ]     | exp "||" exp          -- Disjunction
-- [X]     | exp "&&" exp          -- Conjunction
-- [ ]     | "!" exp               -- Negation
+- [x]     | exp "&&" exp          -- Conjunction
+- [x]     | "!" exp               -- Negation
 - [ ]     | exp "==" exp          -- Equality test
 - [ ]     | exp "<" exp           -- Lesser test
 - [ ]     | "(" exp ")"           -- Grouping of expressions

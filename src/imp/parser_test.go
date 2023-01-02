@@ -134,6 +134,39 @@ func TestIntegerExpression(t *testing.T) {
 	// Invalid number input is checked by the tokenizer, see tokenizer_test
 }
 
+func TestNegationExpression(t *testing.T) {
+	assertTokensProduceExpression(t,
+		not(boolean(true)),
+		terminal(NOT), booleanToken(true),
+	)
+	assertTokensProduceExpression(t,
+		not(not(variableExpression("test"))),
+		terminal(NOT), terminal(NOT), variable("test"),
+	)
+}
+
+func TestExpressionGroupingHalfOpenParenthesis(t *testing.T) {
+	// Half-closed parenthesis
+	assertTokensProduceError(t, variable("test"), pclose())
+
+}
+
+func TestExpressionGroupingParser(t *testing.T) {
+	assertTokensProduceExpression(t,
+		variableExpression("test"),
+		popen(), variable("test"), pclose(),
+	)
+
+	// // Empty parenthesis are not part of language syntax -> error
+	// assertTokensProduceError(t, popen(), pclose())
+
+	// // Half-open parenthesis
+	// assertTokensProduceError(t, popen(), variable("test"))
+
+	// // Mismatched nested parenthesis
+	// assertTokensProduceError(t, popen(), variable("test"), popen(), pclose())
+}
+
 func TestBinaryOperatorExpressions(t *testing.T) {
 	assertTokensProduceExpression(t,
 		and(
@@ -216,13 +249,19 @@ func TestPrintStatement(t *testing.T) {
 
 }
 
+func assertTokensProduceError(t *testing.T, tokenList ...Token) {
+	ast, err := parseExpressionFromTokensDefault(t, tokenList...)
+	assert.Error(t, err)
+	assert.Nil(t, ast)
+}
+
 func parseExpressionFromTokensDefault(t *testing.T, tokenList ...Token) (Exp, error) {
 	tokenizerResult := (TokenizerResultData)(tokenList)
 	tokenizerStream := TokenizerStream{
 		tokenList: &tokenizerResult,
 		context:   makeDefaultContext(),
 	}
-	return parseExpression(tokenizerStream)
+	return parseIsolatedExpression(tokenizerStream)
 }
 
 func assertTokensProduceExpression(t *testing.T, expectedAst Exp, tokenList ...Token) (Exp, error) {

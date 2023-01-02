@@ -148,6 +148,10 @@ func or(x, y Exp) Exp {
 	return (Or)([2]Exp{x, y})
 }
 
+func not(x Exp) Exp {
+	return (Not)(x)
+}
+
 func sequenceStatement(stmt1 Stmt, stmt2 Stmt) Stmt {
 	return Seq{
 		stmt1, stmt2,
