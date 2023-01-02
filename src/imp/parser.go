@@ -4,14 +4,6 @@ import (
 	"errors"
 )
 
-func expect(token string, tokens TokenizerResult) {
-
-}
-
-func accept() {
-
-}
-
 func parseVariable(tokens TokenizerStream) (Var, error) {
 	variable, err := tokens.expectTokenType(VariableName)
 	if err == nil {
@@ -50,13 +42,43 @@ func parseExpressionInteger(tokens TokenizerStream) (Exp, error) {
 
 //}
 
+func parseExpressionMultRhs(tokens TokenizerStream) (Exp, error) {
+	return nil, nil
+}
+
 func parseExpressionMult(tokens TokenizerStream) (Exp, error) {
 	return parseExpressionValue(tokens)
 }
 
+func parseExpressionGenericRhs(tokens TokenizerStream, operator InfixOperator) (Exp, error) {
+	_, err := tokens.peekTerminal(operator.terminal)
+	if err == nil {
+		tokens.pop()
+		return parseExpressionGeneric(tokens, operator)
+	}
+	// else skip
+	//TODO: remove error
+	return nil, errors.New("Could not parse Rhs for " + operator.terminal)
+}
+
+func parseExpressionGeneric(tokens TokenizerStream, operator InfixOperator) (Exp, error) {
+	var lhs, lerr = (Exp)(nil), (error)(nil)
+	if operator.higherPriority != nil {
+		lhs, lerr = parseExpressionGeneric(tokens, *operator.higherPriority)
+	} else {
+		lhs, lerr = parseExpressionValue(tokens)
+	}
+	rhs, rerr := parseExpressionGenericRhs(tokens, operator)
+	if rerr == nil {
+		return operator.make(lhs, rhs), nil
+	} else {
+		return lhs, lerr
+	}
+}
+
 func parseExpressionPlusRhs(tokens TokenizerStream) (Exp, error) {
-	token, err := tokens.peek()
-	if err == nil && token.tokenType == Terminal && token.token == ADD {
+	_, err := tokens.peekTerminal(ADD)
+	if err == nil {
 		tokens.pop()
 		return parseExpressionPlus(tokens)
 	}
@@ -66,16 +88,36 @@ func parseExpressionPlusRhs(tokens TokenizerStream) (Exp, error) {
 }
 
 func parseExpressionPlus(tokens TokenizerStream) (Exp, error) {
-	lhs, lerr := parseExpressionMult(tokens)
-	rhs, rerr := parseExpressionPlusRhs(tokens)
-	if rerr == nil {
-		return Plus{
-			lhs,
-			rhs,
-		}, nil
-	} else {
-		return lhs, lerr
+
+	idk := InfixOperator{
+		make: func(lhs, rhs Exp) Exp {
+			return Plus{
+				lhs, rhs,
+			}
+		},
+		terminal: ADD,
+		higherPriority: &InfixOperator{
+			make: func(lhs, rhs Exp) Exp {
+				return Mult{
+					lhs,
+					rhs,
+				}
+			},
+			terminal:       MULTIPLY,
+			higherPriority: nil,
+		},
 	}
+	return parseExpressionGeneric(tokens, idk)
+	// lhs, lerr := parseExpressionMult(tokens)
+	// rhs, rerr := parseExpressionPlusRhs(tokens)
+	// if rerr == nil {
+	// 	return Plus{
+	// 		lhs,
+	// 		rhs,
+	// 	}, nil
+	// } else {
+	// 	return lhs, lerr
+	// }
 }
 
 func parseExpression(tokens TokenizerStream) (Exp, error) {
