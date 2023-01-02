@@ -35,12 +35,26 @@ type TokenizerResult interface {
 	expectTerminal(token string) bool
 }
 
-func (tokenList *TokenizerStream) expectTerminal(token string) bool {
-	tokenFromList, err := tokenList.pop()
-	if err == nil && tokenFromList.tokenType == Terminal && tokenFromList.token == token {
-		return true
+func (tokenList *TokenizerStream) expectTokenType(tokenType TokenType) (Token, error) {
+	if tokenList.isEmpty() {
+		return nothing(), errors.New("Expected " + string(tokenType) + ", received nothing")
 	}
-	return false
+	tokenFromList, _ := tokenList.pop()
+	if tokenFromList.tokenType == tokenType {
+		return tokenFromList, nil
+	}
+	return tokenFromList, errors.New("Expected " + string(tokenType) + ", received " + string(tokenFromList.tokenType))
+}
+
+func (tokenList *TokenizerStream) expectTerminal(token string) (Token, error) {
+	if tokenList.isEmpty() {
+		return nothing(), errors.New("Expected terminal " + token + ", received nothing")
+	}
+	tokenFromList, err := tokenList.expectTokenType(Terminal)
+	if err == nil && tokenFromList.token == token {
+		return tokenFromList, nil
+	}
+	return tokenFromList, errors.New("Expected terminal " + token + ", received " + tokenFromList.token)
 }
 
 func (tokenList *TokenizerStream) isEmpty() bool {
@@ -49,14 +63,14 @@ func (tokenList *TokenizerStream) isEmpty() bool {
 
 func (tokenList *TokenizerStream) peek() (Token, error) {
 	if tokenList.isEmpty() {
-		return Token{}, errors.New("No more tokens left")
+		return nothing(), errors.New("No more tokens left")
 	}
 	return (*tokenList.tokenList)[0], nil
 }
 
 func (tokenList *TokenizerStream) pop() (Token, error) {
 	if tokenList.isEmpty() {
-		return Token{}, errors.New("No more tokens left")
+		return nothing(), errors.New("No more tokens left")
 	}
 	var value Token
 	deref := *tokenList.tokenList

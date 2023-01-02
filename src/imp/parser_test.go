@@ -56,36 +56,50 @@ func surroundWithParenthesis(token ...Token) []Token {
 	return wrappedTokenList
 }
 
+func TestDeclarationStatement(t *testing.T) {
+	assertTokensProduceStatement(t,
+		declarationStatement("myvar", number(5)),
+		variable("myvar"), terminal(DECLARATION), integer(5),
+	)
+}
+
+func TestAssignmentStatement(t *testing.T) {
+	assertTokensProduceStatement(t,
+		assignmentStatement("myvar", number(5)),
+		variable("myvar"), terminal(ASSIGNMENT), integer(5),
+	)
+}
+
 func TestExpressionParser(t *testing.T) {
-	testTokensExp(t, plus(number(1), number(2)),
+	assertTokensProduceExpression(t, plus(number(1), number(2)),
 		integer(1), terminal(ADD), integer(2))
 
 	// TODO: check if default parsed order of operations matches requirements
-	testTokensExp(t, plus(number(1), plus(number(2), number(3))),
+	assertTokensProduceExpression(t, plus(number(1), plus(number(2), number(3))),
 		integer(1), terminal(ADD), integer(2), terminal(ADD), integer(3))
-	testTokensExp(t, plus(plus(number(1), number(2)), number(3)),
+	assertTokensProduceExpression(t, plus(plus(number(1), number(2)), number(3)),
 		popen(), integer(1), terminal(ADD), integer(2), pclose(), terminal(ADD), integer(3))
 }
 
 func TestPrintStatement(t *testing.T) {
 	// Notice: different token sequences can result in identical AST
-	testTokens(t, printStatement(variableExpression("myvar")),
+	assertTokensProduceProgram(t, printStatement(variableExpression("myvar")),
 		terminal(PRINT), variable("myvar"))
 
-	testTokens(t, printStatement(number(5)),
+	assertTokensProduceProgram(t, printStatement(number(5)),
 		terminal(PRINT), integer(5))
-	testTokens(t, printStatement(number(5)),
+	assertTokensProduceProgram(t, printStatement(number(5)),
 		terminal(PRINT), popen(), integer(5), pclose())
 
 	additionPrintStatement := printStatement(plus(
 		number(10),
 		number(-20),
 	))
-	testTokens(t,
+	assertTokensProduceProgram(t,
 		additionPrintStatement,
 		terminal(PRINT), integer(10), terminal(ADD), integer(-20),
 	)
-	testTokens(t,
+	assertTokensProduceProgram(t,
 		additionPrintStatement,
 		terminal(PRINT),
 		terminal(OPEN_EXPRESSION_GROUPING),
@@ -93,7 +107,7 @@ func TestPrintStatement(t *testing.T) {
 		terminal(CLOSE_EXPRESSION_GROUPING),
 		terminal(ADD),
 		integer(-20))
-	testTokens(t,
+	assertTokensProduceProgram(t,
 		additionPrintStatement,
 		terminal(PRINT),
 		terminal(OPEN_EXPRESSION_GROUPING),
@@ -105,7 +119,7 @@ func TestPrintStatement(t *testing.T) {
 
 }
 
-func testTokensExp(t *testing.T, expectedAst Exp, tokenList ...Token) (Exp, error) {
+func assertTokensProduceExpression(t *testing.T, expectedAst Exp, tokenList ...Token) (Exp, error) {
 	tokenizerResult := (TokenizerResultData)(tokenList)
 	tokenizerStream := TokenizerStream{
 		tokenList: &tokenizerResult,
@@ -117,7 +131,19 @@ func testTokensExp(t *testing.T, expectedAst Exp, tokenList ...Token) (Exp, erro
 	return exp, err
 }
 
-func testTokens(t *testing.T, expectedAst Stmt, tokenList ...Token) (Stmt, ExecutionContext, error) {
+func assertTokensProduceStatement(t *testing.T, expectedAst Stmt, tokenList ...Token) (Stmt, error) {
+	tokenizerResult := (TokenizerResultData)(tokenList)
+	tokenizerStream := TokenizerStream{
+		tokenList: &tokenizerResult,
+		context:   makeDefaultContext(),
+	}
+	stmt, err := parseStatement(tokenizerStream)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedAst, stmt)
+	return stmt, err
+}
+
+func assertTokensProduceProgram(t *testing.T, expectedAst Stmt, tokenList ...Token) (Stmt, ExecutionContext, error) {
 	context := makeDefaultContext()
 	wrappedTokenList := surroundWithBlock(tokenList...)
 	ast, error := parseFromTokens(wrappedTokenList, context)
@@ -127,6 +153,7 @@ func testTokens(t *testing.T, expectedAst Stmt, tokenList ...Token) (Stmt, Execu
 }
 
 func testSource(t *testing.T, source string) {
+	// TODO: move to evaluator test
 	context := ExecutionContext{
 		out:    make(PrintChannel, 1000),
 		signal: make(SignalChannel, 100),

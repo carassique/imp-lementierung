@@ -140,6 +140,20 @@ func or(x, y Exp) Exp {
 	return (Or)([2]Exp{x, y})
 }
 
+func declarationStatement(name string, exp Exp) Stmt {
+	return Decl{
+		lhs: name,
+		rhs: exp,
+	}
+}
+
+func assignmentStatement(name string, exp Exp) Stmt {
+	return Assign{
+		lhs: name,
+		rhs: exp,
+	}
+}
+
 func printStatement(x Exp) Stmt {
 	return Print{
 		exp: x,

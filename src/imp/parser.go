@@ -12,12 +12,17 @@ func accept() {
 
 }
 
-func parseExpressionVariable(tokens TokenizerStream) (Exp, error) {
-	token, err := tokens.pop()
-	if err == nil && token.tokenType == VariableName {
-		return Var(token.token), nil
+func parseVariable(tokens TokenizerStream) (Var, error) {
+	variable, err := tokens.expectTokenType(VariableName)
+	if err == nil {
+		// TODO: additional variable name format checks?
+		return Var(variable.token), nil
 	}
-	return nil, errors.New("Could not parse variable name")
+	return Var(""), err
+}
+
+func parseExpressionVariable(tokens TokenizerStream) (Exp, error) {
+	return parseVariable(tokens)
 }
 
 func parseExpressionBoolean(tokens TokenizerStream) (Exp, error) {
@@ -78,12 +83,12 @@ func parseExpression(tokens TokenizerStream) (Exp, error) {
 }
 
 func parseExpressionGrouping(tokens TokenizerStream) (Exp, error) {
-	ok := tokens.expectTerminal(OPEN_EXPRESSION_GROUPING)
-	if ok {
+	_, err := tokens.expectTerminal(OPEN_EXPRESSION_GROUPING)
+	if err == nil {
 		exp, err := parseExpression(tokens)
 		if err == nil {
-			ok = tokens.expectTerminal(CLOSE_EXPRESSION_GROUPING)
-			if ok {
+			_, err = tokens.expectTerminal(CLOSE_EXPRESSION_GROUPING)
+			if err == nil {
 				return exp, err
 			}
 		}
@@ -146,27 +151,34 @@ func parseStatementPrint(tokens TokenizerStream) (Stmt, error) {
 }
 
 func parseStatementIfThenElse(tokens TokenizerStream) (Stmt, error) {
-	tokens.expectTerminal(IF)
-	condition, error := parseExpression(tokens)
-	thenBlock, error := parseBlock(tokens)
-	tokens.expectTerminal(ELSE)
-	elseBlock, error := parseBlock(tokens)
+	_, err := tokens.expectTerminal(IF)
+	if err != nil {
+		return nil, err
+	}
+	condition, err := parseExpression(tokens)
+	if err != nil {
+		return nil, err
+	}
+	thenBlock, err := parseBlock(tokens)
+	if err != nil {
+		return nil, err
+	}
+	_, err = tokens.expectTerminal(ELSE)
+	if err != nil {
+		return nil, err
+	}
+	elseBlock, err := parseBlock(tokens)
+	if err != nil {
+		return nil, err
+	}
 	return IfThenElse{
 		cond:     condition,
 		thenStmt: thenBlock,
 		elseStmt: elseBlock,
-	}, error
+	}, nil
 }
 
 func parseStatementWhile() {
-
-}
-
-func parseStatementVariableAssignment() {
-
-}
-
-func parseStatementVariableDeclaration() {
 
 }
 
@@ -174,31 +186,63 @@ func parseStatementSequence() {
 
 }
 
+func parseStatementVariableDeclarationOrAssignment(tokens TokenizerStream) (Stmt, error) {
+	// TODO: implement fork assignment/declaration
+	variable, err := parseVariable(tokens)
+	if err != nil {
+		return nil, err
+	}
+	operand, err := tokens.expectTokenType(Terminal)
+	if err != nil {
+		return nil, err
+	}
+	if operand.token != ASSIGNMENT && operand.token != DECLARATION {
+		return nil, errors.New("Expected variable declaration or assignment, received " + operand.token)
+	}
+	exp, err := parseExpression(tokens)
+	if err != nil {
+		return nil, err
+	}
+	switch operand.token {
+	case DECLARATION:
+		return declarationStatement(string(variable), exp), nil
+	case ASSIGNMENT:
+		return assignmentStatement(string(variable), exp), nil
+	}
+	return nil, errors.New("Parsing variable declaration or assignment failed")
+}
+
 func parseStatement(tokens TokenizerStream) (Stmt, error) {
+	token, err := tokens.peek()
+	if err != nil {
+		return nil, errors.New("Expected statement, received nothing")
+	}
+	switch token.tokenType {
+	case VariableName:
+		return parseStatementVariableDeclarationOrAssignment(tokens)
+	}
 	return parseStatementPrint(tokens)
 }
 
 func parseBlock(tokens TokenizerStream) (Stmt, error) {
-	//token := tokens.pop()
-	// if token.tokenType == Terminal && token.token == OPEN_BLOCK_GROUPING {
-	// 	//start creating struct for block??
-	// }
-	//expect(OPEN_BLOCK_GROUPING)
-	isValid := tokens.expectTerminal(OPEN_BLOCK_GROUPING)
-	stmt, error := parseStatement(tokens)
-	isValid = tokens.expectTerminal(CLOSE_BLOCK_GROUPING)
-	println(isValid)
-	return stmt, error
-	// types: ...
-	//expect(CLOSE_BLOCK_GROUPING)
+	_, err := tokens.expectTerminal(OPEN_BLOCK_GROUPING)
+	if err == nil {
+		// err is redeclared along with stmt... so multiple error returns are necessary
+		stmt, err := parseStatement(tokens)
+		if err == nil {
+			_, err := tokens.expectTerminal(CLOSE_BLOCK_GROUPING)
+			if err == nil {
+				return stmt, nil
+			}
+			return nil, err
+		}
+		return nil, err
+	}
+	return nil, err
 }
 
 func parseProgram(tokens TokenizerStream) (Stmt, error) {
 	return parseBlock(tokens)
-}
-
-func advanceToken() {
-
 }
 
 func parseFromTokens(tokens TokenizerResultData, context ExecutionContext) (Stmt, error) {

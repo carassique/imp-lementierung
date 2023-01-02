@@ -6,6 +6,12 @@ func tokens(tokens ...Token) TokenizerResultData {
 	return (TokenizerResultData)(tokens)
 }
 
+func nothing() Token {
+	return Token{
+		tokenType: Error,
+	}
+}
+
 func noMatch(word string) Token {
 	return Token{
 		tokenType: Error,
