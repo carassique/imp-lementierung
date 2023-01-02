@@ -16,9 +16,9 @@
 - [x]     | "true" | "false"      -- Booleans
 - [x]     | exp "+" exp           -- Addition
 - [x]     | exp "*" exp           -- Multiplication
-- [ ]     | exp "||" exp          -- Disjunction
-- [ ]     | exp "&&" exp          -- Conjunction
-- [ ]     | "!" exp               -- Negation
+- [x]     | exp "||" exp          -- Disjunction
+- [x]     | exp "&&" exp          -- Conjunction
+- [x]     | "!" exp               -- Negation
 - [ ]     | exp "==" exp          -- Equality test
 - [x]     | exp "<" exp           -- Lesser test
 - [x]     | "(" exp ")"           -- Grouping of expressions
@@ -38,10 +38,10 @@
 
 - [ ] exp ::= 0 | 1 | -1 | ...     -- Integers
 - [ ]     | "true" | "false"      -- Booleans
-- [ ]     | exp "+" exp           -- Addition
+- [X]     | exp "+" exp           -- Addition
 - [ ]     | exp "*" exp           -- Multiplication
 - [ ]     | exp "||" exp          -- Disjunction
-- [ ]     | exp "&&" exp          -- Conjunction
+- [X]     | exp "&&" exp          -- Conjunction
 - [ ]     | "!" exp               -- Negation
 - [ ]     | exp "==" exp          -- Equality test
 - [ ]     | exp "<" exp           -- Lesser test

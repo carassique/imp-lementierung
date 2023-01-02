@@ -68,8 +68,8 @@ func TestNumbers(t *testing.T) {
 	t.Log("Test number literal tokenization")
 	assertTokensMatch(t, "123", integer(123))
 	assertTokensMatch(t, "-123", integer(-123))
-	assertTokensMatch(t, "- 123", integer(123)) //TODO: consider error
-
+	assertProducesErrorAtToken(t, "- 123")
+	assertProducesErrorAtToken(t, "12,3", integer(12))
 }
 
 func TestNumberExpressions(t *testing.T) {
@@ -159,6 +159,12 @@ func TestExpressionGrouping(t *testing.T) {
 		terminal(AND))
 }
 
+func assertProducesErrorAtToken(t *testing.T, sourceCode string, expectedTokens ...Token) {
+	tokens, err := tokenize(sourceCode)
+	assert.Error(t, err)
+	assert.Equal(t, (TokenizerResultData)(expectedTokens), tokens)
+}
+
 func assertTokensMatch(t *testing.T, sourceCode string, expectedTokens ...Token) {
 	assertTokensResultMatch(t, sourceCode, tokens(expectedTokens...))
 }
@@ -168,6 +174,7 @@ func assertTokensEmpty(t *testing.T, sourceCode string) {
 }
 
 func assertTokensResultMatch(t *testing.T, sourceCode string, expectedTokens TokenizerResultData) {
-	tokenList := tokenize(sourceCode)
+	tokenList, err := tokenize(sourceCode)
+	assert.NoError(t, err)
 	assert.Equal(t, expectedTokens, tokenList)
 }

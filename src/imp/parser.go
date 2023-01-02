@@ -84,14 +84,14 @@ func parseExpressionPlusRhs(tokens TokenizerStream) (Exp, error) {
 	_, err := tokens.peekTerminal(ADD)
 	if err == nil {
 		tokens.pop()
-		return parseExpressionPlus(tokens)
+		return parseExpressionBinaryOperator(tokens)
 	}
 	// else skip
 	//TODO: remove error
 	return nil, errors.New("Could not parse PlusRhs")
 }
 
-func parseExpressionPlus(tokens TokenizerStream) (Exp, error) {
+func parseExpressionBinaryOperator(tokens TokenizerStream) (Exp, error) {
 	multiply := InfixOperator{
 		make: func(lhs, rhs Exp) Exp {
 			return Mult{
@@ -110,6 +110,24 @@ func parseExpressionPlus(tokens TokenizerStream) (Exp, error) {
 		terminal:       ADD,
 		higherPriority: &multiply,
 	}
+	and := InfixOperator{
+		make: func(lhs, rhs Exp) Exp {
+			return And{
+				lhs, rhs,
+			}
+		},
+		terminal:       AND,
+		higherPriority: &plus,
+	}
+	or := InfixOperator{
+		make: func(lhs, rhs Exp) Exp {
+			return Or{
+				lhs, rhs,
+			}
+		},
+		terminal:       OR,
+		higherPriority: &and,
+	}
 	lessThan := InfixOperator{
 		make: func(lhs, rhs Exp) Exp {
 			return LessThan{
@@ -117,24 +135,14 @@ func parseExpressionPlus(tokens TokenizerStream) (Exp, error) {
 			}
 		},
 		terminal:       LESS_THAN,
-		higherPriority: &plus,
+		higherPriority: &or,
 	}
 
 	return parseExpressionGeneric(tokens, lessThan)
-	// lhs, lerr := parseExpressionMult(tokens)
-	// rhs, rerr := parseExpressionPlusRhs(tokens)
-	// if rerr == nil {
-	// 	return Plus{
-	// 		lhs,
-	// 		rhs,
-	// 	}, nil
-	// } else {
-	// 	return lhs, lerr
-	// }
 }
 
 func parseExpression(tokens TokenizerStream) (Exp, error) {
-	return parseExpressionPlus(tokens)
+	return parseExpressionBinaryOperator(tokens)
 }
 
 func parseExpressionGrouping(tokens TokenizerStream) (Exp, error) {
@@ -352,6 +360,9 @@ func parseFromTokens(tokens TokenizerResultData, context ExecutionContext) (Stmt
 }
 
 func parse(sourceCode string, context ExecutionContext) (Stmt, error) {
-	tokensArray := tokenize(sourceCode)
+	tokensArray, err := tokenize(sourceCode)
+	if err != nil {
+		return nil, err
+	}
 	return parseFromTokens(tokensArray, context)
 }

@@ -115,6 +115,39 @@ func TestExpressionParser(t *testing.T) {
 		popen(), integer(1), terminal(ADD), integer(2), pclose(), terminal(ADD), integer(3))
 }
 
+func TestBooleanExpression(t *testing.T) {
+	assertTokensProduceExpression(t, boolean(true), booleanToken(true))
+	assertTokensProduceExpression(t, boolean(false), booleanToken(false))
+}
+
+func TestIntegerExpression(t *testing.T) {
+	assertTokensProduceExpression(t, number(0), integer(0))
+	assertTokensProduceExpression(t, number(1), integer(1))
+	assertTokensProduceExpression(t, number(-1), integer(-1))
+	assertTokensProduceExpression(t, number(0), Token{
+		tokenType:    IntegerValue,
+		token:        "-0",
+		integerValue: 0,
+	})
+	assertTokensProduceExpression(t, number(1234), integer(1234))
+	assertTokensProduceExpression(t, number(-1234), integer(-1234))
+	// Invalid number input is checked by the tokenizer, see tokenizer_test
+}
+
+func TestBinaryOperatorExpressions(t *testing.T) {
+	assertTokensProduceExpression(t,
+		and(
+			plus(
+				variableExpression("a"), variableExpression("b"),
+			),
+			boolean(false),
+		),
+
+		variable("a"), terminal(ADD), variable("b"),
+		terminal(AND), booleanToken(false),
+	)
+}
+
 func TestWhileStatement(t *testing.T) {
 	ast := whileStatement(
 		lessThan(
@@ -183,13 +216,17 @@ func TestPrintStatement(t *testing.T) {
 
 }
 
-func assertTokensProduceExpression(t *testing.T, expectedAst Exp, tokenList ...Token) (Exp, error) {
+func parseExpressionFromTokensDefault(t *testing.T, tokenList ...Token) (Exp, error) {
 	tokenizerResult := (TokenizerResultData)(tokenList)
 	tokenizerStream := TokenizerStream{
 		tokenList: &tokenizerResult,
 		context:   makeDefaultContext(),
 	}
-	exp, err := parseExpression(tokenizerStream)
+	return parseExpression(tokenizerStream)
+}
+
+func assertTokensProduceExpression(t *testing.T, expectedAst Exp, tokenList ...Token) (Exp, error) {
+	exp, err := parseExpressionFromTokensDefault(t, tokenList...)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedAst, exp)
 	return exp, err
@@ -222,7 +259,8 @@ func testSource(t *testing.T, source string) {
 		out:    make(PrintChannel, 1000),
 		signal: make(SignalChannel, 100),
 	}
-	tokens := tokenize(source)
+	tokens, err := tokenize(source)
+	assert.NoError(t, err)
 	t.Log("Tokens: [", tokens, "]")
 	program, error := parseFromTokens(tokens, context)
 	assert.NoError(t, error)
@@ -248,6 +286,7 @@ func testSource(t *testing.T, source string) {
 
 func TestTokenizer(t *testing.T) {
 	t.Log("Tokenizer test")
-	tokenList := tokenize("print 123 -11 ham Jam true { } = == =")
+	tokenList, err := tokenize("print 123 -11 ham Jam true { } = == =")
+	assert.NoError(t, err)
 	t.Logf("%v", tokenList)
 }

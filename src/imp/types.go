@@ -86,4 +86,5 @@ type Plus [2]Exp
 type And [2]Exp
 type Or [2]Exp
 type LessThan [2]Exp
+type Equals [2]Exp
 type Var string

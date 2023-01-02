@@ -1,6 +1,7 @@
 package imp
 
 import (
+	"errors"
 	"regexp"
 	"strconv"
 	"strings"
@@ -206,7 +207,7 @@ func anyFullMatches(word string, matchers ...TokenCandidateMatcher) (bool, Token
 	return false, noMatch(word)
 }
 
-func tokenize(sourcecode string) TokenizerResultData {
+func tokenize(sourcecode string) (TokenizerResultData, error) {
 	tokenList := make([]Token, 0)
 	candidateMatchers := allMatchers()
 	//fullMatchers := allMatchers()
@@ -239,14 +240,17 @@ func tokenize(sourcecode string) TokenizerResultData {
 				tokenList = append(tokenList, nextToken)
 			} else {
 				// TODO error
-
+				return tokenList, errors.New("Could not recognize token " + tokenCandidate)
 			}
 			// Rematch with this character as first
 			tokenCandidate = ""
 			currentToken = (string)(character)
 			hasMatch, newCandidateMatchers = matchCandidateToken(currentToken, candidateMatchers)
 			if !hasMatch {
-				// Single-character word does not have matching tokens -> skip
+				// Single-character word does not have matching tokens
+				// -> skip if supported whitespace character
+				// otherwise throw error
+				// TODO
 				currentToken = ""
 				tokenCandidate = ""
 				candidateMatchers = allMatchers()
@@ -259,7 +263,7 @@ func tokenize(sourcecode string) TokenizerResultData {
 			candidateMatchers = newCandidateMatchers
 		}
 	}
-	return tokenList
+	return tokenList, nil
 }
 
 func tokenize2(sourceCode string, terminalTokens StringSet) TokenizerResultData {
