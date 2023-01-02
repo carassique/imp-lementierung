@@ -18,15 +18,19 @@ func parseExpressionVariable(tokens TokenizerStream) (Exp, error) {
 }
 
 func parseExpressionBoolean(tokens TokenizerStream) (Exp, error) {
-	return nil, nil
+	booleanToken, err := tokens.expectTokenType(BooleanValue)
+	if err == nil {
+		return boolean(booleanToken.booleanValue), err
+	}
+	return nil, err
 }
 
 func parseExpressionInteger(tokens TokenizerStream) (Exp, error) {
-	token, err := tokens.pop()
-	if err == nil && token.tokenType == IntegerValue {
-		return number(token.integerValue), nil
+	token, err := tokens.expectTokenType(IntegerValue)
+	if err == nil {
+		return number(token.integerValue), err
 	}
-	return nil, errors.New("Could not parse integer")
+	return nil, err
 }
 
 // func parseExpressionGrouping(tokens TokenizerStream) (Exp, error) {
@@ -291,6 +295,8 @@ func parseStatementConcrete(tokens TokenizerStream) (Stmt, error) {
 			return parseStatementPrint(tokens)
 		case WHILE:
 			return parseStatementWhile(tokens)
+		case IF:
+			return parseStatementIfThenElse(tokens)
 		}
 	}
 	return nil, errors.New("Could not parse statement, received " + token.token + " of type " + string(token.tokenType))

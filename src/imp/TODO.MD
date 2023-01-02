@@ -19,3 +19,4 @@
 ## Deadlines
 - [x] Fetch deadlines
     W15, 17.1-23.1 Projektabgabe und Präsentation
+
