@@ -77,6 +77,28 @@ func parseExpression(tokens TokenizerStream) (Exp, error) {
 	return parseExpressionPlus(tokens)
 }
 
+func parseExpressionGrouping(tokens TokenizerStream) (Exp, error) {
+	ok := tokens.expectTerminal(OPEN_EXPRESSION_GROUPING)
+	if ok {
+		exp, err := parseExpression(tokens)
+		if err == nil {
+			ok = tokens.expectTerminal(CLOSE_EXPRESSION_GROUPING)
+			if ok {
+				return exp, err
+			}
+		}
+	}
+	return nil, errors.New("Could not parse expression grouping")
+}
+
+func parseExpressionNegation(tokens TokenizerStream) (Exp, error) {
+	token := tokens.pop()
+	if token.tokenType == Terminal && token.token == NOT {
+		return parseExpression(tokens)
+	}
+	return nil, errors.New("Could not parse logic negation")
+}
+
 func parseExpressionValue(tokens TokenizerStream) (Exp, error) {
 	firstToken := tokens.peek()
 	switch firstToken.tokenType {
@@ -86,6 +108,13 @@ func parseExpressionValue(tokens TokenizerStream) (Exp, error) {
 		return parseExpressionBoolean(tokens)
 	case VariableName:
 		return parseExpressionVariable(tokens)
+	case Terminal:
+		switch firstToken.token {
+		case NOT:
+			return parseExpressionNegation(tokens)
+		case OPEN_EXPRESSION_GROUPING:
+			return parseExpressionGrouping(tokens)
+		}
 	}
 	return nil, errors.New("Could not parse value")
 }

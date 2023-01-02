@@ -47,6 +47,14 @@ func variable(name string) Token {
 	}
 }
 
+func popen() Token {
+	return openExpressionGrouping()
+}
+
+func pclose() Token {
+	return closeExpressionGrouping()
+}
+
 func openExpressionGrouping() Token {
 	return Token{
 		tokenType: Terminal,

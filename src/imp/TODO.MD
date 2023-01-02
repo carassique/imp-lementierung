@@ -6,5 +6,12 @@
 - [ ] Tokenizer non-whitespace delimited token recognition buggy (see simple_print_loop.imp)
 - [ ] while whileSomething tokenizer
 
+### Check
+- [ ] (-1) wrapping minus mandatory or not, validate implementation
+
+## Architecture
+- [ ] Separate ExecutionContext from parser
+
 ## Deadlines
-- [ ] Fetch deadlines
+- [x] Fetch deadlines
+    W15, 17.1-23.1 Projektabgabe und Präsentation

@@ -140,6 +140,16 @@ func or(x, y Exp) Exp {
 	return (Or)([2]Exp{x, y})
 }
 
+func printStatement(x Exp) Stmt {
+	return Print{
+		exp: x,
+	}
+}
+
+func variableExpression(name string) Exp {
+	return Var(name)
+}
+
 // Examples
 
 func run(e Exp) {

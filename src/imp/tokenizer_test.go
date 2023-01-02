@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTerminalsAutomatedAll(t *testing.T) {
+func TestAutomatedAll(t *testing.T) {
 	t.Log("Test all terminal tokens")
 	for _, key := range terminalTokensPriority {
 		assertTokensMatch(t, key, terminal(key))
@@ -17,6 +17,7 @@ func TestTerminalsAutomatedAll(t *testing.T) {
 		assertTokensMatch(t, testedSource, terminal(key), terminal(key))
 	}
 
+	// TODO: larger token pool, more breadth
 	t.Log("Randomize and test two terminals in a row")
 	detRand := rand.New(rand.NewSource(123))
 	for i := 0; i < 100; i++ {
@@ -69,6 +70,16 @@ func TestNumbers(t *testing.T) {
 	assertTokensMatch(t, "-123", integer(-123))
 	assertTokensMatch(t, "- 123", integer(123)) //TODO: consider error
 
+}
+
+func TestNumberExpressions(t *testing.T) {
+	t.Log("Test numbers within expressions")
+	assertTokensMatch(t, "-12+-5", integer(-12), terminal(ADD), integer(-5))
+	assertTokensMatch(t, "-12-5", integer(-12), integer(-5))
+	assertTokensMatch(t, "(-12 + (-5))",
+		terminal(OPEN_EXPRESSION_GROUPING), integer(-12), terminal(ADD),
+		terminal(OPEN_EXPRESSION_GROUPING), integer(-5),
+		terminal(CLOSE_EXPRESSION_GROUPING), terminal(CLOSE_EXPRESSION_GROUPING))
 }
 
 func TestStrangeVariableNames(t *testing.T) {
