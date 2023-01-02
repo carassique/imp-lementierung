@@ -115,6 +115,36 @@ func TestExpressionParser(t *testing.T) {
 		popen(), integer(1), terminal(ADD), integer(2), pclose(), terminal(ADD), integer(3))
 }
 
+func TestWhileStatement(t *testing.T) {
+	ast := whileStatement(
+		lessThan(
+			variableExpression("myvar"),
+			number(100),
+		),
+		sequenceStatement(
+			printStatement(variableExpression("myvar")),
+			assignmentStatement("myvar",
+				plus(variableExpression("myvar"), number(-1)))),
+	)
+
+	tokens := []Token{
+		terminal(WHILE),
+		variable("myvar"), terminal(LESS_THAN), integer(100),
+		terminal(OPEN_BLOCK_GROUPING),
+		terminal(PRINT), variable("myvar"), terminal(STATEMENT_DELIMITER),
+		variable("myvar"), terminal(ASSIGNMENT),
+		variable("myvar"), terminal(ADD), integer(-1),
+		terminal(CLOSE_BLOCK_GROUPING)}
+
+	assertTokensProduceStatement(t,
+		ast,
+		tokens...,
+	)
+	assertTokensProduceProgram(t,
+		ast,
+		tokens...)
+}
+
 func TestPrintStatement(t *testing.T) {
 	// Notice: different token sequences can result in identical AST
 	assertTokensProduceProgram(t, printStatement(variableExpression("myvar")),

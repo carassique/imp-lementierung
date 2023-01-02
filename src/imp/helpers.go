@@ -132,6 +132,10 @@ func plus(x, y Exp) Exp {
 
 }
 
+func lessThan(x, y Exp) Exp {
+	return LessThan{x, y}
+}
+
 func mult(x, y Exp) Exp {
 	return (Mult)([2]Exp{x, y})
 }
@@ -161,6 +165,13 @@ func assignmentStatement(name string, exp Exp) Stmt {
 	return Assign{
 		lhs: name,
 		rhs: exp,
+	}
+}
+
+func whileStatement(cond Exp, body Stmt) Stmt {
+	return While{
+		cond: cond,
+		stmt: body,
 	}
 }
 
