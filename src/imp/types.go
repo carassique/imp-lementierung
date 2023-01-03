@@ -1,5 +1,10 @@
 package imp
 
+import (
+	"reflect"
+	"strings"
+)
+
 // Values
 
 type Kind int
@@ -20,48 +25,63 @@ type Val struct {
 
 // Types
 
-type Type int
+type Type string
 
 const (
-	TyIllTyped Type = 0
-	TyInt      Type = 1
-	TyBool     Type = 2
+	TyIllTyped Type = "TyIllTyped"
+	TyInt      Type = "TyInt"
+	TyBool     Type = "TyBool"
 )
 
 // Value State is a mapping from variable names to values
 type ValState map[string]Val
 
-func makeRootValueClosure() ClosureState[Val] {
+func makeRootValueClosure() Closure[Val] {
+	errorStack := make(ErrorStack[Val], 0)
 	makeStateMap := func() ClosureStateMap[Val] {
 		return make(map[string]Val, 0)
 	}
 	closureState := ClosureState[Val]{
 		makeStateMap: makeStateMap,
 		stateMap:     makeStateMap(),
+		errorStack:   &errorStack,
 	}
-	return closureState
+	return &closureState
 }
 
 // Value State is a mapping from variable names to types
 type TyState map[string]Type
 
-func makeRootTypeClosure() ClosureState[Type] {
+func makeRootTypeClosure() Closure[Type] {
+	errorStack := make(ErrorStack[Type], 0)
 	makeStateMap := func() ClosureStateMap[Type] {
 		return make(map[string]Type, 0)
 	}
 	closureState := ClosureState[Type]{
 		makeStateMap: makeStateMap,
 		stateMap:     makeStateMap(),
+		errorStack:   &errorStack,
 	}
-	return closureState
+	return &closureState
 }
 
 type ClosureStateMap[T any] map[string]T
+
+type ErrorStack[T any] []ClosureError[T]
+
+type ClosureError[T any] struct {
+	reason              string
+	closure             Closure[T]
+	offenderType        OffenderType
+	offendingStatement  *Stmt
+	offendingExpression *Exp
+}
 
 type ClosureState[T any] struct {
 	makeStateMap  func() ClosureStateMap[T]
 	stateMap      ClosureStateMap[T]
 	parentClosure *ClosureState[T]
+	errorStack    *ErrorStack[T]
 }
 
 type Closure[T any] interface {
@@ -73,14 +93,79 @@ type Closure[T any] interface {
 	assign(key string, value T)
 	declare(key string, value T)
 	makeChild() Closure[T]
+	error(offender interface{}, reason string)
+	pushError(err ClosureError[T])
+	getErrorStack() ErrorStack[T]
+	errorStackToString() string
 }
 
-func (closure *ClosureState[T]) makeChild() ClosureState[T] {
-	return ClosureState[T]{
+func makeHeader(t interface{}) string {
+	return "[" + reflect.TypeOf(t).Name() + "] "
+}
+
+func closureErrorToString[T any](err ClosureError[T]) string {
+	switch err.offenderType {
+	case Statement:
+		return makeHeader(*err.offendingStatement) + err.reason
+	case Expression:
+		return makeHeader(*err.offendingExpression) + err.reason
+	default:
+		return "[] " + err.reason
+	}
+}
+
+func (closure *ClosureState[T]) errorStackToString() string {
+	errorStack := *closure.errorStack
+	var sb strings.Builder
+	sb.WriteString("\n============== ERROR STACK ====================\n")
+	for _, err := range errorStack {
+		sb.WriteString(closureErrorToString(err) + "\n")
+	}
+	sb.WriteString("============== ERROR STACK END ================\n")
+	return sb.String()
+}
+
+func (closure *ClosureState[T]) pushError(err ClosureError[T]) {
+	stack := *closure.errorStack
+	*closure.errorStack = append(stack, err)
+}
+
+func (closure *ClosureState[T]) error(offender interface{}, reason string) {
+	switch v := offender.(type) {
+	case Stmt:
+		closure.pushError(ClosureError[T]{
+			reason:             reason,
+			closure:            closure,
+			offenderType:       Statement,
+			offendingStatement: &v,
+		})
+	case Exp:
+		closure.pushError(ClosureError[T]{
+			reason:              reason,
+			closure:             closure,
+			offenderType:        Expression,
+			offendingExpression: &v,
+		})
+	default:
+		closure.pushError(ClosureError[T]{
+			reason:       reason,
+			closure:      closure,
+			offenderType: Unsupported,
+		})
+	}
+}
+
+func (closure *ClosureState[T]) makeChild() Closure[T] {
+	return &ClosureState[T]{
 		makeStateMap:  closure.makeStateMap,
 		stateMap:      closure.makeStateMap(),
+		errorStack:    closure.errorStack,
 		parentClosure: closure,
 	}
+}
+
+func (closure *ClosureState[T]) getErrorStack() ErrorStack[T] {
+	return *closure.errorStack
 }
 
 func (closure *ClosureState[T]) has(key string) bool {
@@ -139,8 +224,9 @@ func (closure *ClosureState[T]) assign(key string, value T) {
 type OffenderType string
 
 const (
-	Expression OffenderType = "expression"
-	Statement  OffenderType = "statement"
+	Expression  OffenderType = "expression"
+	Statement   OffenderType = "statement"
+	Unsupported OffenderType = "unsupported"
 )
 
 type TypecheckDiagnostics struct {
@@ -177,14 +263,14 @@ func mkDiagExpression(exp Exp, desc string) TypecheckDiagnostics {
 
 type Exp interface {
 	pretty() string
-	eval(s ClosureState[Val]) Val
-	infer(t ClosureState[Type]) Type
+	eval(s Closure[Val]) Val
+	infer(t Closure[Type]) Type
 }
 
 type Stmt interface {
 	pretty() string
-	eval(s ClosureState[Val])
-	check(t ClosureState[Type]) bool
+	eval(s Closure[Val])
+	check(t Closure[Type]) bool
 }
 
 // Statement cases (incomplete)

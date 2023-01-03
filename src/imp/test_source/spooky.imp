@@ -1,20 +1,15 @@
 {
     finish := false;
-    counter := 0;
+     counter := 0;
     while !finish {
+        counter = lupa;
+        counter = false;
+        print 1 < 2;
         counter = counter + 1;
         print counter;
         if counter == 10 {
             finish = true
         } else {
-            counter := 10;
-            print counter;
-            counter := true;
-            if counter < 10 {
-                print 1337
-            } else {
-                print 7331
-            };
             print counter
         }
     };
