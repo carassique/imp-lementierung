@@ -33,7 +33,7 @@ func ex4() {
 			rhs: number(2),
 		},
 	}
-	program.eval(s)
+	program.eval(makeRootValueClosure())
 	println("\n*******")
 	println(showVal(s["variableName1"]))
 	// ast := plus(number(1), number(2))
@@ -64,7 +64,7 @@ func ex5() {
 		lhs: "iterator",
 		rhs: number(10),
 	}, wh}
-	seq.eval(s)
+	seq.eval(makeRootValueClosure())
 	println("\n*******")
 	println(showVal(s["iterator"]))
 	println("\n*******")

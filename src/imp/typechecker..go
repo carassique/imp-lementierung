@@ -7,17 +7,18 @@ package imp
 func (stmt Print) check(t ClosureState[Type]) bool {
 	parameterType := stmt.exp.infer(t)
 	return parameterType != TyIllTyped
+
 }
 
 func (while While) check(t ClosureState[Type]) bool {
-	conditionType := while.cond.infer(t) //TODO: change as below
+	conditionType := while.cond.infer(t)
 	statementTypeCheckResult := while.stmt.check(t.makeChild())
 
 	return conditionType == TyBool && statementTypeCheckResult
 }
 
 func (ite IfThenElse) check(t ClosureState[Type]) bool {
-	conditionType := ite.cond.infer(t) // TODO: change to remove simplificating assumption
+	conditionType := ite.cond.infer(t)
 	thenStatementTypeCheckResult := ite.thenStmt.check(t.makeChild())
 	elseStatementTypeCheckResult := ite.elseStmt.check(t.makeChild())
 	return conditionType == TyBool && thenStatementTypeCheckResult && elseStatementTypeCheckResult
@@ -36,7 +37,7 @@ func (decl Decl) check(t ClosureState[Type]) bool {
 		return false
 	}
 	x := (string)(decl.lhs)
-	t.set(x, ty)
+	t.declare(x, ty)
 	return true //TODO: check redeclaration
 }
 

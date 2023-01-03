@@ -6,6 +6,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestIncompatibleBinaryExpressions(t *testing.T) {
+
+}
+
 func TestPrintStatement_NonExistantVariable_TypeCheckerFalse(t *testing.T) {
 	closure := makeRootTypeClosure()
 	printStatement := Print{

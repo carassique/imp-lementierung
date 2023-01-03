@@ -11,29 +11,48 @@ import (
 /////////////////////////
 // Stmt instances
 
-func (stmt Print) eval(s ValState) {
+func (stmt Print) eval(s ClosureState[Val]) {
 	stmt.out <- showVal(stmt.exp.eval(s))
 }
 
-func (stmt Assign) eval(s ValState) {
-	s[stmt.lhs] = stmt.rhs.eval(s)
+func isValidValueType(val Val) bool {
+	return val.flag == ValueBool || val.flag == ValueInt
+}
+
+func isRuntimeTypeCompatible(a Val, b Val) bool {
+	// Assuming that allowing undefined and error type assignments is unhelpful
+	return isValidValueType(a) && isValidValueType(b) && a.flag == b.flag
+}
+
+func (stmt Assign) eval(s ClosureState[Val]) {
+	identifier := stmt.lhs
+	value := stmt.rhs.eval(s)
+	if s.has(identifier) {
+		variable := s.get(identifier)
+		if isRuntimeTypeCompatible(variable, value) {
+			s.assign(identifier, value)
+		} else {
+			// TODO: runtime error
+			fmt.Print("Could not assign to: " + identifier)
+		}
+	}
 }
 
 // eval
 
-func (stmt Seq) eval(s ValState) {
+func (stmt Seq) eval(s ClosureState[Val]) {
 	stmt[0].eval(s)
 	stmt[1].eval(s)
 }
 
-func (ite IfThenElse) eval(s ValState) {
+func (ite IfThenElse) eval(s ClosureState[Val]) {
 	v := ite.cond.eval(s)
 	if v.flag == ValueBool {
 		switch {
 		case v.valB:
-			ite.thenStmt.eval(s)
+			ite.thenStmt.eval(s.makeChild())
 		case !v.valB:
-			ite.elseStmt.eval(s)
+			ite.elseStmt.eval(s.makeChild())
 		}
 
 	} else {
@@ -41,13 +60,13 @@ func (ite IfThenElse) eval(s ValState) {
 	}
 }
 
-func (while While) eval(s ValState) {
+func (while While) eval(s ClosureState[Val]) {
 	conditionHolds := true
 	for conditionHolds {
 		v := while.cond.eval(s)
 		if v.flag == ValueBool {
 			if v.valB {
-				while.stmt.eval(s)
+				while.stmt.eval(s.makeChild())
 			} else {
 				conditionHolds = false
 			}
@@ -57,13 +76,13 @@ func (while While) eval(s ValState) {
 
 // Maps are represented via points.
 // Hence, maps are passed by "reference" and the update is visible for the caller as well.
-func (decl Decl) eval(s ValState) {
-	v := decl.rhs.eval(s)
-	x := (string)(decl.lhs)
-	s[x] = v
+func (decl Decl) eval(s ClosureState[Val]) {
+	value := decl.rhs.eval(s)
+	identifier := (string)(decl.lhs)
+	s.declare(identifier, value) // TODO: runtime type validity check?
 }
 
-func (exp Equals) eval(s ValState) Val {
+func (exp Equals) eval(s ClosureState[Val]) Val {
 	//TODO: verify spec for AND (short circuting allowed?)
 	e1 := exp[0].eval(s)
 	e2 := exp[1].eval(s)
@@ -83,28 +102,37 @@ func (exp Equals) eval(s ValState) Val {
 	}
 }
 
-func (exp LessThan) eval(s ValState) Val {
-	return mkBool(exp[0].eval(s).valI < exp[1].eval(s).valI) // TOOD: implement checks
+func (exp LessThan) eval(s ClosureState[Val]) Val {
+	lhs := exp[0].eval(s)
+	rhs := exp[0].eval(s)
+	if isRuntimeTypeCompatible(lhs, rhs) && lhs.flag == ValueInt {
+		return mkBool(lhs.valI < rhs.valI)
+	}
+	return mkRuntimeError(errors.New("Incompatible variable types"))
 }
 
-func (exp Var) eval(s ValState) Val {
-	variableName := (string)(exp)
-	return s[variableName] //TODO: implement eval time checks (variable exists?)
+func (exp Var) eval(s ClosureState[Val]) Val {
+	identifier := (string)(exp)
+	if s.has(identifier) {
+		return s.get(identifier)
+	} else {
+		return mkRuntimeError(errors.New("Variable does not exist in this context: " + identifier))
+	}
 }
 
-func (exp Not) eval(s ValState) Val {
+func (exp Not) eval(s ClosureState[Val]) Val {
 	return mkBool(!exp[0].eval(s).valB) //TODO: implement eval time checks
 }
 
-func (x Bool) eval(s ValState) Val {
+func (x Bool) eval(s ClosureState[Val]) Val {
 	return mkBool((bool)(x))
 }
 
-func (x Num) eval(s ValState) Val {
+func (x Num) eval(s ClosureState[Val]) Val {
 	return mkInt((int)(x))
 }
 
-func (e Mult) eval(s ValState) Val {
+func (e Mult) eval(s ClosureState[Val]) Val {
 	n1 := e[0].eval(s)
 	n2 := e[1].eval(s)
 	if n1.flag == ValueInt && n2.flag == ValueInt {
@@ -113,7 +141,7 @@ func (e Mult) eval(s ValState) Val {
 	return mkUndefined()
 }
 
-func (e Plus) eval(s ValState) Val {
+func (e Plus) eval(s ClosureState[Val]) Val {
 	n1 := e[0].eval(s)
 	n2 := e[1].eval(s)
 	if n1.flag == ValueInt && n2.flag == ValueInt {
@@ -122,7 +150,7 @@ func (e Plus) eval(s ValState) Val {
 	return mkUndefined()
 }
 
-func (e And) eval(s ValState) Val {
+func (e And) eval(s ClosureState[Val]) Val {
 	b1 := e[0].eval(s)
 	b2 := e[1].eval(s)
 	switch {
@@ -134,7 +162,7 @@ func (e And) eval(s ValState) Val {
 	return mkUndefined()
 }
 
-func (e Or) eval(s ValState) Val {
+func (e Or) eval(s ClosureState[Val]) Val {
 	b1 := e[0].eval(s)
 	b2 := e[1].eval(s)
 	switch {

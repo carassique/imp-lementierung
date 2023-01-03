@@ -384,8 +384,7 @@ func testSource(t *testing.T, source string) {
 	closure := makeRootTypeClosure()
 	assert.NoError(t, error)
 	assert.True(t, program.check(closure))
-	stateMap := make(map[string]Val)
-	program.eval(stateMap)
+	program.eval(makeRootValueClosure())
 	close(context.out)
 	context.signal <- true
 	//hasFinishedExecuting := false

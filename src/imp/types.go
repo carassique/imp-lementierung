@@ -31,6 +31,17 @@ const (
 // Value State is a mapping from variable names to values
 type ValState map[string]Val
 
+func makeRootValueClosure() ClosureState[Val] {
+	makeStateMap := func() ClosureStateMap[Val] {
+		return make(map[string]Val, 0)
+	}
+	closureState := ClosureState[Val]{
+		makeStateMap: makeStateMap,
+		stateMap:     makeStateMap(),
+	}
+	return closureState
+}
+
 // Value State is a mapping from variable names to types
 type TyState map[string]Type
 
@@ -55,8 +66,12 @@ type ClosureState[T any] struct {
 
 type Closure[T any] interface {
 	has(key string) bool
+	hasLocal(key string) bool
 	get(key string) T
-	set(key string, value T)
+	getLocal(key string) (T, bool)
+	setLocal(key string, value T)
+	assign(key string, value T)
+	declare(key string, value T)
 	makeChild() Closure[T]
 }
 
@@ -69,7 +84,7 @@ func (closure *ClosureState[T]) makeChild() ClosureState[T] {
 }
 
 func (closure *ClosureState[T]) has(key string) bool {
-	_, declaredLocally := (closure.stateMap)[key]
+	declaredLocally := closure.hasLocal(key)
 	if !declaredLocally {
 		if closure.parentClosure != nil {
 			return closure.parentClosure.has(key)
@@ -78,8 +93,18 @@ func (closure *ClosureState[T]) has(key string) bool {
 	return declaredLocally
 }
 
+func (closure *ClosureState[T]) hasLocal(key string) bool {
+	_, declaredLocally := closure.getLocal(key)
+	return declaredLocally
+}
+
+func (closure *ClosureState[T]) getLocal(key string) (T, bool) {
+	value, ok := closure.stateMap[key]
+	return value, ok
+}
+
 func (closure *ClosureState[T]) get(key string) T {
-	value, declaredLocally := closure.stateMap[key]
+	value, declaredLocally := closure.getLocal(key)
 	if declaredLocally {
 		return value
 	} else {
@@ -90,21 +115,75 @@ func (closure *ClosureState[T]) get(key string) T {
 	return value
 }
 
-func (closure *ClosureState[T]) set(key string, value T) {
+func (closure *ClosureState[T]) setLocal(key string, value T) {
 	closure.stateMap[key] = value
+}
+
+func (closure *ClosureState[T]) declare(key string, value T) {
+	// Notice: will overwrite previous declarations in the same closure scope
+	closure.setLocal(key, value)
+}
+
+func (closure *ClosureState[T]) assign(key string, value T) {
+	if closure.hasLocal(key) {
+		closure.setLocal(key, value)
+	} else {
+		// Will try to assign
+		// TODO: error reporting
+		closure.parentClosure.assign(key, value)
+	}
 }
 
 // Interface
 
+type OffenderType string
+
+const (
+	Expression OffenderType = "expression"
+	Statement  OffenderType = "statement"
+)
+
+type TypecheckDiagnostics struct {
+	validated           bool
+	offenderType        OffenderType
+	offendingStatement  Stmt
+	offendingExpression Exp
+	description         string
+}
+
+func mkValid() TypecheckDiagnostics {
+	return TypecheckDiagnostics{
+		validated: true,
+	}
+}
+
+func mkDiagStatement(stmt Stmt, desc string) TypecheckDiagnostics {
+	return TypecheckDiagnostics{
+		validated:          false,
+		offenderType:       Statement,
+		offendingStatement: stmt,
+		description:        desc,
+	}
+}
+
+func mkDiagExpression(exp Exp, desc string) TypecheckDiagnostics {
+	return TypecheckDiagnostics{
+		validated:           false,
+		offenderType:        Expression,
+		offendingExpression: exp,
+		description:         desc,
+	}
+}
+
 type Exp interface {
 	pretty() string
-	eval(s ValState) Val
+	eval(s ClosureState[Val]) Val
 	infer(t ClosureState[Type]) Type
 }
 
 type Stmt interface {
 	pretty() string
-	eval(s ValState)
+	eval(s ClosureState[Val])
 	check(t ClosureState[Type]) bool
 }
 

@@ -199,18 +199,16 @@ func variableExpression(name string) Exp {
 // Examples
 
 func run(e Exp) {
-	s := make(map[string]Val)
 	closure := makeRootTypeClosure()
 
 	fmt.Printf("\n ******* ")
 	fmt.Printf("\n %s", e.pretty())
-	fmt.Printf("\n %s", showVal(e.eval(s)))
+	fmt.Printf("\n %s", showVal(e.eval(makeRootValueClosure())))
 	fmt.Printf("\n %s", showType(e.infer(closure)))
 }
 
 func runStatement(e Stmt) {
-	s := make(map[string]Val)
 	fmt.Printf("\n ******* ")
 	fmt.Printf("\n %s \n", e.pretty())
-	e.eval(s)
+	e.eval(makeRootValueClosure())
 }
