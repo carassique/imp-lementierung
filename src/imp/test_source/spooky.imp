@@ -1,9 +1,14 @@
 {
     finish := false;
+    counter := 0 < true;
+    counter := 5* true;
+    counter := true == 5;
+     counter := true < 4;
      counter := 0;
+     counter = true;
+
+    
     while !finish {
-        counter = lupa;
-        counter = false;
         print 1 < 2;
         counter = counter + 1;
         print counter;
