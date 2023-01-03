@@ -7,12 +7,7 @@ import (
 )
 
 func TestPrintStatement_NonExistantVariable_TypeCheckerFalse(t *testing.T) {
-	typeMap := make(map[string]Type)
-
-	closure := TypeClosure{
-		typeMap:       typeMap,
-		parentClosure: nil,
-	}
+	closure := makeRootTypeClosure()
 	printStatement := Print{
 		exp: (Var)("nonExistantVariable"),
 	}

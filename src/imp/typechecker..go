@@ -4,54 +4,53 @@ package imp
 	Statements type checking
 */
 
-func (stmt Print) check(t TypeClosure) bool {
+func (stmt Print) check(t ClosureState[Type]) bool {
 	parameterType := stmt.exp.infer(t)
 	return parameterType != TyIllTyped
 }
 
-func (while While) check(t TypeClosure) bool {
+func (while While) check(t ClosureState[Type]) bool {
 	conditionType := while.cond.infer(t) //TODO: change as below
-	statementTypeCheckResult := while.stmt.check(t)
+	statementTypeCheckResult := while.stmt.check(t.makeChild())
 
 	return conditionType == TyBool && statementTypeCheckResult
 }
 
-func (ite IfThenElse) check(t TypeClosure) bool {
+func (ite IfThenElse) check(t ClosureState[Type]) bool {
 	conditionType := ite.cond.infer(t) // TODO: change to remove simplificating assumption
-	thenStatementTypeCheckResult := ite.thenStmt.check(t)
-	elseStatementTypeCheckResult := ite.elseStmt.check(t)
+	thenStatementTypeCheckResult := ite.thenStmt.check(t.makeChild())
+	elseStatementTypeCheckResult := ite.elseStmt.check(t.makeChild())
 	return conditionType == TyBool && thenStatementTypeCheckResult && elseStatementTypeCheckResult
 }
 
-func (stmt Seq) check(t TypeClosure) bool {
+func (stmt Seq) check(t ClosureState[Type]) bool {
 	if !stmt[0].check(t) {
 		return false
 	}
 	return stmt[1].check(t)
 }
 
-func (decl Decl) check(t TypeClosure) bool {
+func (decl Decl) check(t ClosureState[Type]) bool {
 	ty := decl.rhs.infer(t)
 	if ty == TyIllTyped {
 		return false
 	}
-
 	x := (string)(decl.lhs)
-	t.declareVariable(x, ty)
+	t.set(x, ty)
 	return true //TODO: check redeclaration
 }
 
-func (a Assign) check(t TypeClosure) bool {
+func (a Assign) check(t ClosureState[Type]) bool {
 	x := (string)(a.lhs)
 
-	return t.isVariableDeclared(x) && t.getVariableType(x) == a.rhs.infer(t)
+	return t.has(x) && t.get(x) == a.rhs.infer(t)
 }
 
 /*
 	Expression type inference
 */
 
-func (e LessThan) infer(t TypeClosure) Type {
+func (e LessThan) infer(t ClosureState[Type]) Type {
 	t1 := e[0].infer(t)
 	t2 := e[1].infer(t)
 	if t1 == TyInt && t2 == TyInt { //TODO: validate spec
@@ -60,7 +59,7 @@ func (e LessThan) infer(t TypeClosure) Type {
 	return TyIllTyped
 }
 
-func (e Equals) infer(t TypeClosure) Type {
+func (e Equals) infer(t ClosureState[Type]) Type {
 	t1 := e[0].infer(t) // TODO: check exists
 	t2 := e[1].infer(t)
 
@@ -73,7 +72,7 @@ func (e Equals) infer(t TypeClosure) Type {
 	return TyIllTyped
 }
 
-func (e Not) infer(t TypeClosure) Type {
+func (e Not) infer(t ClosureState[Type]) Type {
 	t1 := e[0].infer(t)
 	if t1 == TyBool {
 		return TyBool
@@ -81,25 +80,25 @@ func (e Not) infer(t TypeClosure) Type {
 	return TyIllTyped
 }
 
-func (x Var) infer(t TypeClosure) Type {
+func (x Var) infer(t ClosureState[Type]) Type {
 	y := (string)(x)
-	if t.isVariableDeclared(y) {
-		return t.getVariableType(y)
+	if t.has(y) {
+		return t.get(y)
 	} else {
 		return TyIllTyped // variable does not exist yields illtyped
 	}
 
 }
 
-func (x Bool) infer(t TypeClosure) Type {
+func (x Bool) infer(t ClosureState[Type]) Type {
 	return TyBool
 }
 
-func (x Num) infer(t TypeClosure) Type {
+func (x Num) infer(t ClosureState[Type]) Type {
 	return TyInt
 }
 
-func (e Mult) infer(t TypeClosure) Type {
+func (e Mult) infer(t ClosureState[Type]) Type {
 	t1 := e[0].infer(t)
 	t2 := e[1].infer(t)
 	if t1 == TyInt && t2 == TyInt {
@@ -108,7 +107,7 @@ func (e Mult) infer(t TypeClosure) Type {
 	return TyIllTyped
 }
 
-func (e Plus) infer(t TypeClosure) Type {
+func (e Plus) infer(t ClosureState[Type]) Type {
 	t1 := e[0].infer(t)
 	t2 := e[1].infer(t)
 	if t1 == TyInt && t2 == TyInt {
@@ -117,7 +116,7 @@ func (e Plus) infer(t TypeClosure) Type {
 	return TyIllTyped
 }
 
-func (e And) infer(t TypeClosure) Type {
+func (e And) infer(t ClosureState[Type]) Type {
 	t1 := e[0].infer(t)
 	t2 := e[1].infer(t)
 	if t1 == TyBool && t2 == TyBool {
@@ -126,7 +125,7 @@ func (e And) infer(t TypeClosure) Type {
 	return TyIllTyped
 }
 
-func (e Or) infer(t TypeClosure) Type {
+func (e Or) infer(t ClosureState[Type]) Type {
 	t1 := e[0].infer(t)
 	t2 := e[1].infer(t)
 	if t1 == TyBool && t2 == TyBool {

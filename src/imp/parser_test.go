@@ -381,10 +381,7 @@ func testSource(t *testing.T, source string) {
 	t.Log("Tokens: [", tokens, "]")
 	program, error := parseFromTokens(tokens, context)
 	assert.NoError(t, error)
-	typeMap := make(map[string]Type)
-	closure := TypeClosure{
-		typeMap: typeMap,
-	}
+	closure := makeRootTypeClosure()
 	assert.NoError(t, error)
 	assert.True(t, program.check(closure))
 	stateMap := make(map[string]Val)

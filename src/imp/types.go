@@ -31,65 +31,67 @@ const (
 // Value State is a mapping from variable names to values
 type ValState map[string]Val
 
-type RuntimeVariableState interface {
-	isVariableDeclared(variableName string) bool
-	getVariableType(variableName string) Kind
-	hasType(Kind) bool
-	getVariableValue(variableName string) Val
-}
-
 // Value State is a mapping from variable names to types
 type TyState map[string]Type
 
-func makeRootTypeClosure() TypeClosure {
-	return TypeClosure{
-		typeMap: make(TyState, 0),
+func makeRootTypeClosure() ClosureState[Type] {
+	makeStateMap := func() ClosureStateMap[Type] {
+		return make(map[string]Type, 0)
 	}
+	closureState := ClosureState[Type]{
+		makeStateMap: makeStateMap,
+		stateMap:     makeStateMap(),
+	}
+	return closureState
 }
 
-type TypeClosure struct {
-	typeMap       TyState
-	parentClosure *TypeClosure
+type ClosureStateMap[T any] map[string]T
+
+type ClosureState[T any] struct {
+	makeStateMap  func() ClosureStateMap[T]
+	stateMap      ClosureStateMap[T]
+	parentClosure *ClosureState[T]
 }
 
-type TypeVariableState interface {
-	isVariableDeclared(variableName string) bool
-	getVariableType(variableName string) Type
-	declareVariable(variableName string, t Type)
-	makeNewClosure() TypeClosure
+type Closure[T any] interface {
+	has(key string) bool
+	get(key string) T
+	set(key string, value T)
+	makeChild() Closure[T]
 }
 
-func (closure *TypeClosure) makeNewClosure() TypeClosure {
-	return TypeClosure{
-		typeMap:       make(TyState, 0),
+func (closure *ClosureState[T]) makeChild() ClosureState[T] {
+	return ClosureState[T]{
+		makeStateMap:  closure.makeStateMap,
+		stateMap:      closure.makeStateMap(),
 		parentClosure: closure,
 	}
 }
 
-func (closure *TypeClosure) isVariableDeclared(variableName string) bool {
-	_, declaredLocally := (closure.typeMap)[variableName]
+func (closure *ClosureState[T]) has(key string) bool {
+	_, declaredLocally := (closure.stateMap)[key]
 	if !declaredLocally {
 		if closure.parentClosure != nil {
-			return closure.parentClosure.isVariableDeclared(variableName)
+			return closure.parentClosure.has(key)
 		}
 	}
 	return declaredLocally
 }
 
-func (closure *TypeClosure) getVariableType(variableName string) Type {
-	val, declaredLocally := closure.typeMap[variableName]
+func (closure *ClosureState[T]) get(key string) T {
+	value, declaredLocally := closure.stateMap[key]
 	if declaredLocally {
-		return val
+		return value
 	} else {
 		if closure.parentClosure != nil {
-			return closure.parentClosure.getVariableType(variableName)
+			return closure.parentClosure.get(key)
 		}
 	}
-	return TyIllTyped
+	return value
 }
 
-func (closure *TypeClosure) declareVariable(variableName string, t Type) {
-	closure.typeMap[variableName] = t
+func (closure *ClosureState[T]) set(key string, value T) {
+	closure.stateMap[key] = value
 }
 
 // Interface
@@ -97,13 +99,13 @@ func (closure *TypeClosure) declareVariable(variableName string, t Type) {
 type Exp interface {
 	pretty() string
 	eval(s ValState) Val
-	infer(t TypeClosure) Type
+	infer(t ClosureState[Type]) Type
 }
 
 type Stmt interface {
 	pretty() string
 	eval(s ValState)
-	check(t TypeClosure) bool
+	check(t ClosureState[Type]) bool
 }
 
 // Statement cases (incomplete)
