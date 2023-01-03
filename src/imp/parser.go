@@ -66,7 +66,7 @@ func parseExpressionGeneric(tokens TokenizerStream, operator InfixOperator) (Exp
 }
 
 func parseExpressionBinaryOperator(tokens TokenizerStream) (Exp, error) {
-	return parseExpressionGeneric(tokens, op().equals)
+	return parseExpressionGeneric(tokens, op().lowest)
 }
 
 func parseIsolatedExpression(tokens TokenizerStream) (Exp, error) {

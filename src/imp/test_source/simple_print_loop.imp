@@ -1,1 +1,7 @@
-{iterator := 10; while 0 < iterator { iterator = (iterator+(-1)); print iterator } }
+{
+    iterator := 10;
+    while 0 < iterator && 5 < iterator {
+        iterator = (iterator+(-1));
+        print iterator
+    }
+}

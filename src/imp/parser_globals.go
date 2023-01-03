@@ -4,6 +4,22 @@ var operators InfixOperators
 
 func op() InfixOperators {
 	if !operators.initialized {
+		lessThan := InfixOperator{
+			make: func(lhs, rhs Exp) Exp {
+				return LessThan{
+					lhs, rhs,
+				}
+			},
+			terminal: LESS_THAN,
+		}
+		equals := InfixOperator{
+			make: func(lhs, rhs Exp) Exp {
+				return Equals{
+					lhs, rhs,
+				}
+			},
+			terminal: EQUALS,
+		}
 		mult := InfixOperator{
 			make: func(lhs, rhs Exp) Exp {
 				return Mult{
@@ -19,17 +35,16 @@ func op() InfixOperators {
 					lhs, rhs,
 				}
 			},
-			terminal:       ADD,
-			higherPriority: &mult,
+			terminal: ADD,
 		}
+
 		and := InfixOperator{
 			make: func(lhs, rhs Exp) Exp {
 				return And{
 					lhs, rhs,
 				}
 			},
-			terminal:       AND,
-			higherPriority: &plus,
+			terminal: AND,
 		}
 		or := InfixOperator{
 			make: func(lhs, rhs Exp) Exp {
@@ -37,29 +52,27 @@ func op() InfixOperators {
 					lhs, rhs,
 				}
 			},
-			terminal:       OR,
-			higherPriority: &and,
+			terminal: OR,
 		}
-		lessThan := InfixOperator{
-			make: func(lhs, rhs Exp) Exp {
-				return LessThan{
-					lhs, rhs,
-				}
-			},
-			terminal:       LESS_THAN,
-			higherPriority: &or,
+
+		precedence := [...]*InfixOperator{
+			&mult,
+			&plus,
+			&lessThan,
+			&equals,
+			&and,
+			&or,
 		}
-		equals := InfixOperator{
-			make: func(lhs, rhs Exp) Exp {
-				return Equals{
-					lhs, rhs,
-				}
-			},
-			terminal:       EQUALS,
-			higherPriority: &lessThan,
+
+		var prevPtr *InfixOperator
+		for _, entry := range precedence {
+			entry.higherPriority = prevPtr
+			prevPtr = entry
 		}
+
 		initialized := true
 		operators = InfixOperators{
+			lowest:      *prevPtr,
 			initialized: initialized,
 			plus:        plus,
 			mult:        mult,

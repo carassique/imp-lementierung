@@ -43,6 +43,7 @@ type InfixOperator struct {
 }
 type InfixOperators struct {
 	initialized bool
+	lowest      InfixOperator
 	plus        InfixOperator
 	mult        InfixOperator
 	or          InfixOperator
