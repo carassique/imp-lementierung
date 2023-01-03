@@ -83,6 +83,11 @@ func mkUndefined() Val {
 	return Val{flag: Undefined}
 }
 
+func mkRuntimeError(err error) Val {
+	return Val{flag: RuntimeError,
+		err: err}
+}
+
 func showVal(v Val) string {
 	var s string
 	switch {
@@ -95,6 +100,8 @@ func showVal(v Val) string {
 		s = Bool(v.valB).pretty()
 	case v.flag == Undefined:
 		s = "Undefined"
+	case v.flag == RuntimeError:
+		s = v.err.Error()
 	}
 	return s
 }
@@ -149,7 +156,7 @@ func or(x, y Exp) Exp {
 }
 
 func not(x Exp) Exp {
-	return (Not)(x)
+	return Not{x}
 }
 
 func sequenceStatement(stmt1 Stmt, stmt2 Stmt) Stmt {

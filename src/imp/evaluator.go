@@ -1,6 +1,10 @@
 package imp
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+	"strconv"
+)
 
 // Evaluator
 
@@ -60,7 +64,23 @@ func (decl Decl) eval(s ValState) {
 }
 
 func (exp Equals) eval(s ValState) Val {
-	return mkBool(exp[0].eval(s).valI < exp[1].eval(s).valI) // TOOD: implement checks
+	//TODO: verify spec for AND (short circuting allowed?)
+	e1 := exp[0].eval(s)
+	e2 := exp[1].eval(s)
+	if e1.flag == e2.flag {
+		switch e1.flag {
+		case ValueBool:
+			return mkBool(e1.valB == e2.valB)
+		case ValueInt:
+			return mkBool(e1.valI == e2.valI)
+		}
+		return mkRuntimeError(errors.New("Unsupported type for equality check: " +
+			strconv.FormatInt((int64)(e1.flag), 10))) //TODO: proper type to stirng conversion
+	} else {
+		// type mismatch! (should have been caught by the typechecker)
+		// throw runtime error
+		return mkRuntimeError(errors.New("Equals type mismatch"))
+	}
 }
 
 func (exp LessThan) eval(s ValState) Val {
@@ -70,6 +90,10 @@ func (exp LessThan) eval(s ValState) Val {
 func (exp Var) eval(s ValState) Val {
 	variableName := (string)(exp)
 	return s[variableName] //TODO: implement eval time checks (variable exists?)
+}
+
+func (exp Not) eval(s ValState) Val {
+	return mkBool(!exp[0].eval(s).valB) //TODO: implement eval time checks
 }
 
 func (x Bool) eval(s ValState) Val {

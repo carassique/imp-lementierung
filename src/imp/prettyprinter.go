@@ -45,6 +45,10 @@ func (x Var) pretty() string {
 	return (string)(x)
 }
 
+func (x Not) pretty() string {
+	return "!" + x[0].pretty()
+}
+
 func (x Bool) pretty() string {
 	if x {
 		return "true"

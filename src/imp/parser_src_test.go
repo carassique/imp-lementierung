@@ -58,4 +58,9 @@ func TestExpressionSimple(t *testing.T) {
 	assertSourceProducesExpression(t,
 		lessThan(plus(number(1), number(1)), number(2)),
 		"1 + 1 < 2")
+
+	// assertSourceProducesExpression(t,
+	// 	number(0),
+	// 	"0 < iterator + 1 < iterator + 5",
+	// )
 }

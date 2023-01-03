@@ -5,15 +5,17 @@ package imp
 type Kind int
 
 const (
-	ValueInt  Kind = 0
-	ValueBool Kind = 1
-	Undefined Kind = 2
+	ValueInt     Kind = 0
+	ValueBool    Kind = 1
+	Undefined    Kind = 2
+	RuntimeError Kind = 3
 )
 
 type Val struct {
 	flag Kind
 	valI int
 	valB bool
+	err  error
 }
 
 // Types
@@ -81,7 +83,7 @@ type Print struct {
 
 type Bool bool
 type Num int
-type Not Exp
+type Not [1]Exp
 type Mult [2]Exp
 type Plus [2]Exp
 type And [2]Exp

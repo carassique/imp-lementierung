@@ -60,13 +60,21 @@ func (e LessThan) infer(t TyState) Type {
 }
 
 func (e Equals) infer(t TyState) Type {
-	t1 := e[0].infer(t)
+	t1 := e[0].infer(t) // TODO: check exists
 	t2 := e[1].infer(t)
 
 	if t1 == TyBool && t2 == TyBool { //TODO: validate spec
 		return TyBool
 	}
 	if t1 == TyInt && t2 == TyInt {
+		return TyBool
+	}
+	return TyIllTyped
+}
+
+func (e Not) infer(t TyState) Type {
+	t1 := e[0].infer(t)
+	if t1 == TyBool {
 		return TyBool
 	}
 	return TyIllTyped

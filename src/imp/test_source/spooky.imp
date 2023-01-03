@@ -1,0 +1,14 @@
+{
+    finish := false;
+    counter := 0;
+    while !finish {
+        counter = counter + 1;
+        print counter;
+        if counter == 10 {
+            finish = true
+        } else {
+            print false
+        }
+    };
+    print 1234
+}
