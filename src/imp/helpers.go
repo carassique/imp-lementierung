@@ -200,11 +200,12 @@ func variableExpression(name string) Exp {
 
 func run(e Exp) {
 	s := make(map[string]Val)
-	t := make(map[string]Type)
+	closure := makeRootTypeClosure()
+
 	fmt.Printf("\n ******* ")
 	fmt.Printf("\n %s", e.pretty())
 	fmt.Printf("\n %s", showVal(e.eval(s)))
-	fmt.Printf("\n %s", showType(e.infer(t)))
+	fmt.Printf("\n %s", showType(e.infer(closure)))
 }
 
 func runStatement(e Stmt) {

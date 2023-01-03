@@ -2,7 +2,7 @@
     finish := false;
     counter := 0;
     while !finish {
-        counter = counter + 1;
+        counter := counter + 1;
         print counter;
         if counter == 10 {
             finish = true

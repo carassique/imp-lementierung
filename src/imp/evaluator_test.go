@@ -27,3 +27,15 @@ func testEvaluator(t *testing.T) {
 	runStatement(seq)
 	t.Error("Evaluator error")
 }
+
+func TestWhile(t *testing.T) {
+
+	// Infinite loop
+	// counter := 2
+	// for counter < 10 {
+	// 	counter := counter + 1 // Receives counter from the outer scope
+	// 	t.Log(counter)
+	// 	counter = 10
+	// 	t.Log(counter)
+	// }
+}

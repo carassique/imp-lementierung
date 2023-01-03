@@ -99,10 +99,10 @@ func main() {
 
 	fmt.Printf("\n")
 
-	ex1()
-	ex2()
-	ex3()
-	ex4()
-	ex5()
-	ex6()
+	// ex1()
+	// ex2()
+	// ex3()
+	// ex4()
+	// ex5()
+	// ex6()
 }

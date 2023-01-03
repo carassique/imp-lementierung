@@ -382,8 +382,11 @@ func testSource(t *testing.T, source string) {
 	program, error := parseFromTokens(tokens, context)
 	assert.NoError(t, error)
 	typeMap := make(map[string]Type)
+	closure := TypeClosure{
+		typeMap: typeMap,
+	}
 	assert.NoError(t, error)
-	assert.True(t, program.check(typeMap))
+	assert.True(t, program.check(closure))
 	stateMap := make(map[string]Val)
 	program.eval(stateMap)
 	close(context.out)
