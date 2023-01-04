@@ -100,8 +100,8 @@ func showVal(v Val) string {
 		s = Bool(v.valB).pretty()
 	case v.flag == Undefined:
 		s = "Undefined"
-	case v.flag == RuntimeError:
-		s = v.err.Error()
+	default:
+		s = "UnknownError"
 	}
 	return s
 }

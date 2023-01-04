@@ -1,11 +1,5 @@
 package imp
 
-import (
-	"errors"
-	"fmt"
-	"strconv"
-)
-
 // Evaluator
 
 /////////////////////////
@@ -32,13 +26,21 @@ func (stmt Assign) eval(s Closure[Val]) {
 		if isRuntimeTypeCompatible(variable, value) {
 			s.assign(identifier, value)
 		} else {
-			// TODO: runtime error
-			fmt.Print("Could not assign to: " + identifier)
+			s.error(stmt, "Cannot assign "+expToString(stmt.rhs, value)+" to variable '"+identifier+"' of type "+valToString(variable))
 		}
+	} else {
+		s.error(stmt, "Variable '"+identifier+"' has not been declared in this context")
 	}
 }
 
+func valToString(val Val) string {
+	return "[" + string(val.flag) + "]: '" + showVal(val) + "'"
+}
+
 // eval
+func expToString(exp Exp, val Val) string {
+	return valToString(val) + " in '" + exp.pretty() + "'"
+}
 
 func (stmt Seq) eval(s Closure[Val]) {
 	stmt[0].eval(s)
@@ -54,9 +56,8 @@ func (ite IfThenElse) eval(s Closure[Val]) {
 		case !v.valB:
 			ite.elseStmt.eval(s.makeChild())
 		}
-
 	} else {
-		fmt.Printf("if-then-else eval fail")
+		s.error(ite, "Condition is not of boolean type: "+expToString(ite.cond, v))
 	}
 }
 
@@ -70,6 +71,8 @@ func (while While) eval(s Closure[Val]) {
 			} else {
 				conditionHolds = false
 			}
+		} else {
+			s.error(while, "Condition is not of boolean type: "+expToString(while.cond, v))
 		}
 	}
 }
@@ -79,8 +82,19 @@ func (while While) eval(s Closure[Val]) {
 func (decl Decl) eval(s Closure[Val]) {
 	value := decl.rhs.eval(s)
 	identifier := (string)(decl.lhs)
-	s.declare(identifier, value) // TODO: runtime type validity check?
+	if value.flag == Undefined {
+		s.error(decl, "Cannot declare variable '"+identifier+"' with value of undefined type: "+valToString(value))
+	}
+	s.declare(identifier, value)
 }
+
+func operatorToString(op Exp, lhs Val, rhs Val, text string) string {
+	return text + valToString(lhs) + "; " + valToString(rhs) + " in " + op.pretty()
+}
+
+const (
+	IncompatibleTypes = "Incompatible value types: "
+)
 
 func (exp Equals) eval(s Closure[Val]) Val {
 	//TODO: verify spec for AND (short circuting allowed?)
@@ -93,22 +107,24 @@ func (exp Equals) eval(s Closure[Val]) Val {
 		case ValueInt:
 			return mkBool(e1.valI == e2.valI)
 		}
-		return mkRuntimeError(errors.New("Unsupported type for equality check: " +
-			strconv.FormatInt((int64)(e1.flag), 10))) //TODO: proper type to stirng conversion
+		s.error(exp, operatorToString(exp, e1, e2, "Unsupported value types"))
+		return mkUndefined()
 	} else {
 		// type mismatch! (should have been caught by the typechecker)
 		// throw runtime error
-		return mkRuntimeError(errors.New("Equals type mismatch"))
+		s.error(exp, operatorToString(exp, e1, e2, IncompatibleTypes))
+		return mkUndefined()
 	}
 }
 
 func (exp LessThan) eval(s Closure[Val]) Val {
 	lhs := exp[0].eval(s)
-	rhs := exp[0].eval(s)
+	rhs := exp[1].eval(s)
 	if isRuntimeTypeCompatible(lhs, rhs) && lhs.flag == ValueInt {
 		return mkBool(lhs.valI < rhs.valI)
 	}
-	return mkRuntimeError(errors.New("Incompatible variable types"))
+	s.error(exp, operatorToString(exp, lhs, rhs, IncompatibleTypes))
+	return mkUndefined()
 }
 
 func (exp Var) eval(s Closure[Val]) Val {
@@ -116,12 +132,18 @@ func (exp Var) eval(s Closure[Val]) Val {
 	if s.has(identifier) {
 		return s.get(identifier)
 	} else {
-		return mkRuntimeError(errors.New("Variable does not exist in this context: " + identifier))
+		s.error(exp, "Variable '"+identifier+"' does not exist in this context.")
+		return mkUndefined()
 	}
 }
 
 func (exp Not) eval(s Closure[Val]) Val {
-	return mkBool(!exp[0].eval(s).valB) //TODO: implement eval time checks
+	val := exp[0].eval(s)
+	if val.flag == ValueBool {
+		return mkBool(!val.valB)
+	}
+	s.error(exp, "Not a boolean value: "+expToString(exp, val))
+	return mkUndefined()
 }
 
 func (x Bool) eval(s Closure[Val]) Val {
@@ -138,6 +160,7 @@ func (e Mult) eval(s Closure[Val]) Val {
 	if n1.flag == ValueInt && n2.flag == ValueInt {
 		return mkInt(n1.valI * n2.valI)
 	}
+	s.error(e, operatorToString(e, n1, n2, IncompatibleTypes))
 	return mkUndefined()
 }
 
@@ -147,6 +170,7 @@ func (e Plus) eval(s Closure[Val]) Val {
 	if n1.flag == ValueInt && n2.flag == ValueInt {
 		return mkInt(n1.valI + n2.valI)
 	}
+	s.error(e, operatorToString(e, n1, n2, IncompatibleTypes))
 	return mkUndefined()
 }
 
@@ -159,6 +183,7 @@ func (e And) eval(s Closure[Val]) Val {
 	case b1.flag == ValueBool && b2.flag == ValueBool:
 		return mkBool(b1.valB && b2.valB)
 	}
+	s.error(e, operatorToString(e, b1, b2, IncompatibleTypes))
 	return mkUndefined()
 }
 
@@ -171,5 +196,6 @@ func (e Or) eval(s Closure[Val]) Val {
 	case b1.flag == ValueBool && b2.flag == ValueBool:
 		return mkBool(b1.valB || b2.valB)
 	}
+	s.error(e, operatorToString(e, b1, b2, IncompatibleTypes))
 	return mkUndefined()
 }

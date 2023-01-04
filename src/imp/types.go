@@ -7,13 +7,13 @@ import (
 
 // Values
 
-type Kind int
+type Kind string
 
 const (
-	ValueInt     Kind = 0
-	ValueBool    Kind = 1
-	Undefined    Kind = 2
-	RuntimeError Kind = 3
+	ValueInt     Kind = "ValueInt"
+	ValueBool    Kind = "ValueBool"
+	Undefined    Kind = "Undefined"
+	RuntimeError Kind = "RuntimeError"
 )
 
 type Val struct {

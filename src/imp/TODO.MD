@@ -26,7 +26,8 @@
 - [ ] Check isSkippable for CRLF/LF
 - [ ] if {} else {} else {} should not cause panic
 
-- [ ] Implement "not" evaluator
+- [x] Implement "not" evaluator
+- [ ] Stop execution on error
 
 ## Architecture
 - [ ] Separate ExecutionContext from parser

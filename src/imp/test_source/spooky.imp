@@ -1,22 +1,19 @@
 {
-    finish := false;
-    counter := 0 < true;
-    counter := 5* true;
-    counter := true == 5;
-     counter := true < 4;
-     counter := 0;
-     counter = true;
-
-    
-    while !finish {
-        print 1 < 2;
-        counter = counter + 1;
+    print 13323;
+    print 22;
+    print true;
+    print false;
+    counter := 0;
+    print counter;
+    if counter < 10 {
+        print 777
+    } else {
         print counter;
-        if counter == 10 {
-            finish = true
-        } else {
-            print counter
-        }
+        print 888
     };
-    print 1234
+    while counter < 10 {
+        counter = counter + 1;
+        counter = true < 5;
+        print counter
+    }
 }

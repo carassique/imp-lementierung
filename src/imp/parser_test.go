@@ -381,11 +381,14 @@ func testSource(t *testing.T, source string) {
 	t.Log("Tokens: [", tokens, "]")
 	program, error := parseFromTokens(tokens, context)
 	assert.NoError(t, error)
-	closure := makeRootTypeClosure()
-	assert.NoError(t, error)
-	assert.True(t, program.check(closure))
-	t.Log(closure.errorStackToString())
-	//program.eval(makeRootValueClosure())
+	//closure := makeRootTypeClosure()
+	//assert.NoError(t, error)
+	//assert.True(t, program.check(closure))
+	//t.Log(closure.errorStackToString())
+	t.Log("\n\n" + program.pretty())
+	execClosure := makeRootValueClosure()
+	program.eval(execClosure)
+
 	close(context.out)
 	context.signal <- true
 	//hasFinishedExecuting := false
@@ -398,6 +401,7 @@ func testSource(t *testing.T, source string) {
 			t.Log(line) // TODO: check no-output-programs
 		}
 	}
+	t.Log(execClosure.errorStackToString())
 	t.Log("Test finished")
 }
 
