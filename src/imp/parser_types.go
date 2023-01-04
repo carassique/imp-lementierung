@@ -21,7 +21,6 @@ type Token struct {
 
 type TokenizerStream struct {
 	tokenList *TokenizerResultData
-	context   ExecutionContext
 }
 
 type ExecutionContext struct {

@@ -36,15 +36,18 @@ const (
 // Value State is a mapping from variable names to values
 type ValState map[string]Val
 
-func makeRootValueClosure() Closure[Val] {
+func makeRootValueClosure(context ExecutionContext) Closure[Val] {
 	errorStack := make(ErrorStack[Val], 0)
 	makeStateMap := func() ClosureStateMap[Val] {
 		return make(map[string]Val, 0)
 	}
+	interrupted := false
 	closureState := ClosureState[Val]{
-		makeStateMap: makeStateMap,
-		stateMap:     makeStateMap(),
-		errorStack:   &errorStack,
+		makeStateMap:     makeStateMap,
+		stateMap:         makeStateMap(),
+		errorStack:       &errorStack,
+		executionContext: &context,
+		interrupted:      &interrupted,
 	}
 	return &closureState
 }
@@ -78,10 +81,12 @@ type ClosureError[T any] struct {
 }
 
 type ClosureState[T any] struct {
-	makeStateMap  func() ClosureStateMap[T]
-	stateMap      ClosureStateMap[T]
-	parentClosure *ClosureState[T]
-	errorStack    *ErrorStack[T]
+	makeStateMap     func() ClosureStateMap[T]
+	stateMap         ClosureStateMap[T]
+	parentClosure    *ClosureState[T]
+	errorStack       *ErrorStack[T]
+	executionContext *ExecutionContext
+	interrupted      *bool
 }
 
 type Closure[T any] interface {
@@ -97,6 +102,8 @@ type Closure[T any] interface {
 	pushError(err ClosureError[T])
 	getErrorStack() ErrorStack[T]
 	errorStackToString() string
+	getExecutionContext() ExecutionContext
+	isInterrupted() bool
 }
 
 func makeHeader(t interface{}) string {
@@ -124,6 +131,16 @@ func (closure *ClosureState[T]) errorStackToString() string {
 	sb.WriteString("============== ERROR STACK END ================\n")
 	return sb.String()
 }
+
+func (closure *ClosureState[T]) isInterrupted() bool {
+	return *closure.interrupted
+}
+
+func (closure *ClosureState[T]) getExecutionContext() ExecutionContext {
+	return *closure.executionContext
+}
+
+const DEFAULT_RUNTIME_ERROR_STACK_LENGTH = 5
 
 func (closure *ClosureState[T]) pushError(err ClosureError[T]) {
 	stack := *closure.errorStack
@@ -153,14 +170,21 @@ func (closure *ClosureState[T]) error(offender interface{}, reason string) {
 			offenderType: Unsupported,
 		})
 	}
+	if closure.executionContext != nil {
+		if len(*closure.errorStack) >= DEFAULT_RUNTIME_ERROR_STACK_LENGTH && !closure.isInterrupted() {
+			*closure.interrupted = true
+		}
+	}
 }
 
 func (closure *ClosureState[T]) makeChild() Closure[T] {
 	return &ClosureState[T]{
-		makeStateMap:  closure.makeStateMap,
-		stateMap:      closure.makeStateMap(),
-		errorStack:    closure.errorStack,
-		parentClosure: closure,
+		makeStateMap:     closure.makeStateMap,
+		stateMap:         closure.makeStateMap(),
+		errorStack:       closure.errorStack,
+		parentClosure:    closure,
+		executionContext: closure.executionContext,
+		interrupted:      closure.interrupted,
 	}
 }
 
@@ -301,7 +325,6 @@ type SignalChannel chan bool
 
 type Print struct {
 	exp Exp
-	out PrintChannel
 }
 
 // Expression cases (incomplete)

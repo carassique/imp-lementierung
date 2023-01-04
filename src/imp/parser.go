@@ -145,7 +145,6 @@ func parseStatementPrint(tokens TokenizerStream) (Stmt, error) {
 	}
 	return (Stmt)(Print{
 		exp: exp,
-		out: tokens.context.out,
 	}), err
 }
 
@@ -290,18 +289,17 @@ func parseProgram(tokens TokenizerStream) (Stmt, error) {
 	return ast, err
 }
 
-func parseFromTokens(tokens TokenizerResultData, context ExecutionContext) (Stmt, error) {
+func parseFromTokens(tokens TokenizerResultData) (Stmt, error) {
 	ast, error := parseProgram(TokenizerStream{
 		tokenList: &tokens,
-		context:   context,
 	})
 	return ast, error
 }
 
-func parse(sourceCode string, context ExecutionContext) (Stmt, error) {
+func parse(sourceCode string) (Stmt, error) {
 	tokensArray, err := tokenize(sourceCode)
 	if err != nil {
 		return nil, err
 	}
-	return parseFromTokens(tokensArray, context)
+	return parseFromTokens(tokensArray)
 }

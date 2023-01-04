@@ -6,7 +6,7 @@ package imp
 // Stmt instances
 
 func (stmt Print) eval(s Closure[Val]) {
-	stmt.out <- showVal(stmt.exp.eval(s))
+	s.getExecutionContext().out <- showVal(stmt.exp.eval(s))
 }
 
 func isValidValueType(val Val) bool {
@@ -63,7 +63,7 @@ func (ite IfThenElse) eval(s Closure[Val]) {
 
 func (while While) eval(s Closure[Val]) {
 	conditionHolds := true
-	for conditionHolds {
+	for conditionHolds && !s.isInterrupted() {
 		v := while.cond.eval(s)
 		if v.flag == ValueBool {
 			if v.valB {

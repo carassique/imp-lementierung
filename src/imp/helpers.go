@@ -203,12 +203,12 @@ func run(e Exp) {
 
 	fmt.Printf("\n ******* ")
 	fmt.Printf("\n %s", e.pretty())
-	fmt.Printf("\n %s", showVal(e.eval(makeRootValueClosure())))
+	fmt.Printf("\n %s", showVal(e.eval(makeRootValueClosure(ExecutionContext{}))))
 	fmt.Printf("\n %s", showType(e.infer(closure)))
 }
 
 func runStatement(e Stmt) {
 	fmt.Printf("\n ******* ")
 	fmt.Printf("\n %s \n", e.pretty())
-	e.eval(makeRootValueClosure())
+	e.eval(makeRootValueClosure(ExecutionContext{}))
 }

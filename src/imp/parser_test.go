@@ -333,7 +333,6 @@ func makeTokenizerStream(tokenList ...Token) TokenizerStream {
 	tokenizerResult := (TokenizerResultData)(tokenList)
 	tokenizerStream := TokenizerStream{
 		tokenList: &tokenizerResult,
-		context:   makeDefaultContext(),
 	}
 	return tokenizerStream
 }
@@ -353,7 +352,6 @@ func assertTokensProduceStatement(t *testing.T, expectedAst Stmt, tokenList ...T
 	tokenizerResult := (TokenizerResultData)(tokenList)
 	tokenizerStream := TokenizerStream{
 		tokenList: &tokenizerResult,
-		context:   makeDefaultContext(),
 	}
 	stmt, err := parseStatement(tokenizerStream)
 	assert.NoError(t, err)
@@ -364,7 +362,7 @@ func assertTokensProduceStatement(t *testing.T, expectedAst Stmt, tokenList ...T
 func assertTokensProduceProgram(t *testing.T, expectedAst Stmt, tokenList ...Token) (Stmt, ExecutionContext, error) {
 	context := makeDefaultContext()
 	wrappedTokenList := surroundWithBlock(tokenList...)
-	ast, error := parseFromTokens(wrappedTokenList, context)
+	ast, error := parseFromTokens(wrappedTokenList)
 	assert.NoError(t, error)
 	assert.Equal(t, expectedAst, ast)
 	return ast, context, error
@@ -374,34 +372,55 @@ func testSource(t *testing.T, source string) {
 	// TODO: move to evaluator test
 	context := ExecutionContext{
 		out:    make(PrintChannel, 1000),
-		signal: make(SignalChannel, 100),
+		signal: make(SignalChannel, 0),
 	}
 	tokens, err := tokenize(source)
 	assert.NoError(t, err)
 	t.Log("Tokens: [", tokens, "]")
-	program, error := parseFromTokens(tokens, context)
+	program, error := parseFromTokens(tokens)
 	assert.NoError(t, error)
 	//closure := makeRootTypeClosure()
 	//assert.NoError(t, error)
 	//assert.True(t, program.check(closure))
 	//t.Log(closure.errorStackToString())
 	t.Log("\n\n" + program.pretty())
-	execClosure := makeRootValueClosure()
-	program.eval(execClosure)
-
-	close(context.out)
-	context.signal <- true
-	//hasFinishedExecuting := false
+	execClosure := makeRootValueClosure(context)
+	go func() {
+		program.eval(execClosure)
+		close(context.out)
+		if len(execClosure.getErrorStack()) == 0 {
+			context.signal <- true
+		} else {
+			t.Log(execClosure.errorStackToString())
+			context.signal <- false
+		}
+	}()
 
 	for {
 		line, more := <-context.out
 		if more == false {
 			break
 		} else {
-			t.Log(line) // TODO: check no-output-programs
+			t.Log(line)
 		}
 	}
-	t.Log(execClosure.errorStackToString())
+	for {
+		<-context.signal
+		break
+	}
+	//close(context.out)
+	//context.signal <- true
+	//hasFinishedExecuting := false
+
+	// for {
+	// 	line, more := <-context.out
+	// 	if more == false {
+	// 		break
+	// 	} else {
+	// 		t.Log(line) // TODO: check no-output-programs
+	// 	}
+	// }
+
 	t.Log("Test finished")
 }
 
