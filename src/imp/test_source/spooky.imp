@@ -1,19 +1,9 @@
 {
-    print 13323;
-    print 22;
-    print true;
-    print false;
-    counter := 0;
-    print counter;
-    if counter < 10 {
-        print 777
+    if false {
+        print 1
     } else {
-        print counter;
-        print 888
-    };
-    while counter < 10 {
-        counter = counter + 1;
-        counter = true < 5;
-        print counter
+        print 2
+    } else {
+        print 3
     }
 }

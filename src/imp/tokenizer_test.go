@@ -64,7 +64,8 @@ func TestTerminals(t *testing.T) {
 
 	assertTokensEmpty(t, "")
 	assertTokensMatch(t, "whi", variable("whi"))
-
+	assertTokensMatch(t, "whileSomething", variable("whileSomething"))
+	assertTokensMatch(t, "while whileSomething", terminal(WHILE), variable("whileSomething"))
 	assertTokensMatch(t, "whilewhi=", variable("whilewhi"), terminal(ASSIGNMENT))
 }
 

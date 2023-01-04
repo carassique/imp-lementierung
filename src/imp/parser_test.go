@@ -383,30 +383,32 @@ func testSource(t *testing.T, source string) {
 	//assert.NoError(t, error)
 	//assert.True(t, program.check(closure))
 	//t.Log(closure.errorStackToString())
-	t.Log("\n\n" + program.pretty())
-	execClosure := makeRootValueClosure(context)
-	go func() {
-		program.eval(execClosure)
-		close(context.out)
-		if len(execClosure.getErrorStack()) == 0 {
-			context.signal <- true
-		} else {
-			t.Log(execClosure.errorStackToString())
-			context.signal <- false
-		}
-	}()
+	if program != nil {
+		t.Log("\n\n" + program.pretty())
+		execClosure := makeRootValueClosure(context)
+		go func() {
+			program.eval(execClosure)
+			close(context.out)
+			if len(execClosure.getErrorStack()) == 0 {
+				context.signal <- true
+			} else {
+				t.Log(execClosure.errorStackToString())
+				context.signal <- false
+			}
+		}()
 
-	for {
-		line, more := <-context.out
-		if more == false {
-			break
-		} else {
-			t.Log(line)
+		for {
+			line, more := <-context.out
+			if more == false {
+				break
+			} else {
+				t.Log(line)
+			}
 		}
-	}
-	for {
-		<-context.signal
-		break
+		for {
+			<-context.signal
+			break
+		}
 	}
 	//close(context.out)
 	//context.signal <- true

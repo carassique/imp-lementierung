@@ -34,11 +34,11 @@ func (decl Decl) pretty() string {
 // pretty print
 
 func (x Equals) pretty() string {
-	return x[0].pretty() + " == " + x[1].pretty()
+	return "(" + x[0].pretty() + " == " + x[1].pretty() + ")"
 }
 
 func (x LessThan) pretty() string {
-	return x[0].pretty() + " < " + x[1].pretty()
+	return "(" + x[0].pretty() + " < " + x[1].pretty() + ")"
 }
 
 func (x Var) pretty() string {
