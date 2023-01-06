@@ -93,10 +93,7 @@ func TestEvalClosure(t *testing.T) {
 		"1", "true", "1")
 }
 
-func TestEvalWhile(t *testing.T) {
-	assertOutputEqualsSource(t, "{ counter := 0; while counter < 10 { print counter; counter = counter + 1 }}",
-		"0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
-
+func TestFibonacci(t *testing.T) {
 	assertOutputEqualsSource(t, `
 	{ 
 	  fibonacciPrevPrev := 0;
@@ -117,6 +114,54 @@ func TestEvalWhile(t *testing.T) {
 		}
 	  }
 	}`, "0", "1", "1", "2", "3", "5", "8", "13", "21", "34", "55")
+}
+
+func TestEvalWhile(t *testing.T) {
+	assertOutputEqualsSource(t, "{ counter := 0; while counter < 10 { print counter; counter = counter + 1 }}",
+		"0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
+}
+
+func TestEvalParenthesis(t *testing.T) {
+	// Parenthesis
+	assertOutputEqualsSource(t, `
+	{
+		print 5 * 2 + 1;
+		print 5 * (2 + 1)
+	}
+	`, "11", "15")
+
+	assertOutputEqualsSource(t, `
+	{
+		print (true || false) == false;
+		print true || false == false;
+		print true || (false == false)
+	}
+	`, BOOLEAN_FALSE, BOOLEAN_TRUE, BOOLEAN_TRUE)
+}
+
+func TestEvalVariable(t *testing.T) {
+
+	// Variable redeclaration
+	assertOutputEqualsSource(t, `
+	{
+		var := 1;
+		print var;
+		var := true;
+		print var;
+		var = false;
+		print var
+	}
+	`, "1", BOOLEAN_TRUE, BOOLEAN_FALSE)
+
+	// Variable assignment via expression
+	assertOutputEqualsSource(t, `
+	{
+		something := 100 < 10 * 10;
+		print something;
+		other := !something;
+		print other
+	}
+	`, BOOLEAN_FALSE, BOOLEAN_TRUE)
 }
 
 func TestEvalIfThenElse(t *testing.T) {
@@ -233,24 +278,13 @@ func TestEvalSimpleExpressions(t *testing.T) {
 	assertOutputEqualsSource(t, `
 	{
 		print 0 < 10;
+		print 0 < 0;
 		print 10 < 20;
 		print 20 < 10;
 		print -10 < 10;
 		print 10 < -10
 	}
-	`, BOOLEAN_TRUE, BOOLEAN_TRUE, BOOLEAN_FALSE, BOOLEAN_TRUE, BOOLEAN_FALSE)
-
-	// // Parenthesis
-	// assertOutputEqualsSource(t, `
-	// {
-	// }
-	// `)
-
-	// // Variable
-	// assertOutputEqualsSource(t, `
-	// {
-	// }
-	// `)
+	`, BOOLEAN_TRUE, BOOLEAN_FALSE, BOOLEAN_TRUE, BOOLEAN_FALSE, BOOLEAN_TRUE, BOOLEAN_FALSE)
 }
 
 func TestEvalComplexExpressions(t *testing.T) {
