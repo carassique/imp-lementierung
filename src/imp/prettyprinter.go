@@ -1,6 +1,9 @@
 package imp
 
-import "strconv"
+import (
+	"strconv"
+	"strings"
+)
 
 // pretty print
 
@@ -8,12 +11,21 @@ func (stmt Print) pretty() string {
 	return "print " + stmt.exp.pretty()
 }
 
+func indent(multiline string) string {
+	split := strings.Split(multiline, "\n")
+	indented := ""
+	for _, line := range split {
+		indented += "    " + line + "\n"
+	}
+	return indented
+}
+
 func (ite IfThenElse) pretty() string {
-	return "if " + ite.cond.pretty() + " { " + ite.thenStmt.pretty() + " } else { " + ite.elseStmt.pretty() + " }"
+	return "if " + ite.cond.pretty() + " {\n" + indent(ite.thenStmt.pretty()) + "} else {\n" + indent(ite.elseStmt.pretty()) + "}"
 }
 
 func (stmt While) pretty() string {
-	return "while " + stmt.cond.pretty() + " { " + stmt.stmt.pretty() + " } "
+	return "while " + stmt.cond.pretty() + " {\n" + indent(stmt.stmt.pretty()) + "}"
 }
 
 func (stmt Assign) pretty() string {
@@ -21,7 +33,7 @@ func (stmt Assign) pretty() string {
 }
 
 func (stmt Seq) pretty() string {
-	return stmt[0].pretty() + "; " + stmt[1].pretty()
+	return stmt[0].pretty() + ";\n" + stmt[1].pretty()
 }
 
 func (decl Decl) pretty() string {
@@ -72,7 +84,7 @@ func (e Mult) pretty() string {
 	var x string
 	x = "("
 	x += e[0].pretty()
-	x += "*"
+	x += " * "
 	x += e[1].pretty()
 	x += ")"
 
@@ -84,7 +96,7 @@ func (e Plus) pretty() string {
 	var x string
 	x = "("
 	x += e[0].pretty()
-	x += "+"
+	x += " + "
 	x += e[1].pretty()
 	x += ")"
 
@@ -96,7 +108,7 @@ func (e And) pretty() string {
 	var x string
 	x = "("
 	x += e[0].pretty()
-	x += "&&"
+	x += " && "
 	x += e[1].pretty()
 	x += ")"
 
@@ -108,7 +120,7 @@ func (e Or) pretty() string {
 	var x string
 	x = "("
 	x += e[0].pretty()
-	x += "||"
+	x += " || "
 	x += e[1].pretty()
 	x += ")"
 

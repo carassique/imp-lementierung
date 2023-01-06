@@ -48,6 +48,7 @@ func makeRootValueClosure(context ExecutionContext) Closure[Val] {
 		errorStack:       &errorStack,
 		executionContext: &context,
 		interrupted:      &interrupted,
+		name:             "EVALUATOR",
 	}
 	return &closureState
 }
@@ -64,6 +65,7 @@ func makeRootTypeClosure() Closure[Type] {
 		makeStateMap: makeStateMap,
 		stateMap:     makeStateMap(),
 		errorStack:   &errorStack,
+		name:         "TYPE-CHECKER",
 	}
 	return &closureState
 }
@@ -82,6 +84,7 @@ type ClosureError[T any] struct {
 
 type ClosureState[T any] struct {
 	makeStateMap     func() ClosureStateMap[T]
+	name             string
 	stateMap         ClosureStateMap[T]
 	parentClosure    *ClosureState[T]
 	errorStack       *ErrorStack[T]
@@ -124,11 +127,11 @@ func closureErrorToString[T any](err ClosureError[T]) string {
 func (closure *ClosureState[T]) errorStackToString() string {
 	errorStack := *closure.errorStack
 	var sb strings.Builder
-	sb.WriteString("\n============== ERROR STACK ====================\n")
+	sb.WriteString("\n============== ERROR STACK " + closure.name + " ====================\n")
 	for _, err := range errorStack {
 		sb.WriteString(closureErrorToString(err) + "\n")
 	}
-	sb.WriteString("============== ERROR STACK END ================\n")
+	sb.WriteString("============== ERROR STACK END " + closure.name + " =================\n")
 	return sb.String()
 }
 
