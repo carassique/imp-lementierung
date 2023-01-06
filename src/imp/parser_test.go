@@ -1,42 +1,10 @@
 package imp
 
 import (
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
-
-const testSourceCodeFilesDirectory = "test_source"
-
-func readAvailableTestSourceFiles() []string {
-	entries, _ := os.ReadDir("./" + testSourceCodeFilesDirectory)
-	fileNames := make([]string, 0)
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			fileNames = append(fileNames, entry.Name())
-		}
-	}
-	return fileNames
-}
-
-func readSourceCodeFile(filename string) string {
-	// TODO: handle error?
-	data, _ := os.ReadFile("./" + testSourceCodeFilesDirectory + "/" + filename)
-	return string(data)
-}
-
-func TestAllSourceFiles(t *testing.T) {
-	filenames := readAvailableTestSourceFiles()
-	for _, filename := range filenames {
-		testSourceFile(t, filename)
-	}
-}
-
-func testSourceFile(t *testing.T, filename string) {
-	t.Log("Test started for " + filename)
-	testSource(t, readSourceCodeFile(filename))
-}
 
 func makeDefaultContext() ExecutionContext {
 	return ExecutionContext{}
@@ -366,64 +334,6 @@ func assertTokensProduceProgram(t *testing.T, expectedAst Stmt, tokenList ...Tok
 	assert.NoError(t, error)
 	assert.Equal(t, expectedAst, ast)
 	return ast, context, error
-}
-
-func testSource(t *testing.T, source string) {
-	// TODO: move to evaluator test
-	context := ExecutionContext{
-		out:    make(PrintChannel, 1000),
-		signal: make(SignalChannel, 0),
-	}
-	tokens, err := tokenize(source)
-	assert.NoError(t, err)
-	t.Log("Tokens: [", tokens, "]")
-	program, error := parseFromTokens(tokens)
-	assert.NoError(t, error)
-	//closure := makeRootTypeClosure()
-	//assert.NoError(t, error)
-	//assert.True(t, program.check(closure))
-	//t.Log(closure.errorStackToString())
-	if program != nil {
-		t.Log("\n\n" + program.pretty())
-		execClosure := makeRootValueClosure(context)
-		go func() {
-			program.eval(execClosure)
-			close(context.out)
-			if len(execClosure.getErrorStack()) == 0 {
-				context.signal <- true
-			} else {
-				t.Log(execClosure.errorStackToString())
-				context.signal <- false
-			}
-		}()
-
-		for {
-			line, more := <-context.out
-			if more == false {
-				break
-			} else {
-				t.Log(line)
-			}
-		}
-		for {
-			<-context.signal
-			break
-		}
-	}
-	//close(context.out)
-	//context.signal <- true
-	//hasFinishedExecuting := false
-
-	// for {
-	// 	line, more := <-context.out
-	// 	if more == false {
-	// 		break
-	// 	} else {
-	// 		t.Log(line) // TODO: check no-output-programs
-	// 	}
-	// }
-
-	t.Log("Test finished")
 }
 
 func TestTokenizer(t *testing.T) {

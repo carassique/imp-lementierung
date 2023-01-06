@@ -1,0 +1,22 @@
+{
+    var := true;
+    if var {
+        var := !var;
+        if var == false {
+            var := 10;
+            if var < 20 {
+                var = 0;
+                while var < 10 {
+                    var = var + 1;
+                    print var
+                }
+            } else {
+                print false
+            }
+        } else {
+            print false
+        }
+    } else {
+        print false
+    }
+}

@@ -15,13 +15,13 @@
         - precedence rules were adjusted to match TypeScript
 
 ## Semantics
-- [ ] check assignment before declaration
+- [x] check assignment before declaration
         - should invarably cause error
 - [x] == should work for any (equal) type
         - is already the case, unless undefined is checked
 - [x] short cirquiting OR and AND seems to be required
 ### Check
-- [ ] Verify language specification
+- [x] Verify language specification
 - [x] (-1) wrapping minus mandatory or not, validate implementation
         - it is not, and it works without wrapping
         - notice: prettifier wraps every expression with () to visualize AST
@@ -29,7 +29,9 @@
         - no precedence requirement was given, using the standard precedence as defined for TypeScript
 - [x] Tokenizer "12,4" integer test case -> should return error
         - see TestNumbers
-- [ ] Check isSkippable for CRLF/LF
+- [x] Check isSkippable for CRLF/LF
+        - won't do: can only test under linux
+        - [ ] document supported systems
 - [x] if {} else {} else {} should not cause panic
         - was only causing panic due to test setup running the prettify()
 
@@ -42,7 +44,8 @@
 
 ## General-TODOs
 - [ ] Check build system, allow running as CLI, compile
-- [ ] Add rigid test cases for evaluator and typechecker
+- [x] Add rigid test cases for evaluator and typechecker
+- [ ] Documentation, how-to's
 - [ ] Request review
 
 ## Deadlines

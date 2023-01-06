@@ -1,7 +1,5 @@
 package imp
 
-import "fmt"
-
 // Simple imperative language
 
 /*
@@ -31,19 +29,7 @@ exp ::= 0 | 1 | -1 | ...     -- Integers
 
 /*
 	Precedence rules:
-	(numeric) == < + * ()
-	(boolean) == || && ! ()
-	a || b && c
-	[dexp rhs[dexp rhs[dexp]]]
-	but wrong operator precedence...
-	exp ::= equal
-	equal::= equal == or | or
-	or ::= or || and | and
-	and ::= and && less | less
-	less ::= less < plus | plus
-	plus ::= plus + mult | mult
-	mult ::= mult * det | det
-	det ::=  var | num | (exp) | !exp
+	Standard precedence
 
 	Normalize:
 	plus ::= mult plusRhs
@@ -83,11 +69,6 @@ func mkUndefined() Val {
 	return Val{flag: Undefined}
 }
 
-func mkRuntimeError(err error) Val {
-	return Val{flag: RuntimeError,
-		err: err}
-}
-
 func showVal(v Val) string {
 	var s string
 	switch {
@@ -99,19 +80,6 @@ func showVal(v Val) string {
 		s = "Undefined"
 	default:
 		s = "UnknownError"
-	}
-	return s
-}
-
-func showType(t Type) string {
-	var s string
-	switch {
-	case t == TyInt:
-		s = "Int"
-	case t == TyBool:
-		s = "Bool"
-	case t == TyIllTyped:
-		s = "Illtyped"
 	}
 	return s
 }
@@ -191,21 +159,4 @@ func printStatement(x Exp) Stmt {
 
 func variableExpression(name string) Exp {
 	return Var(name)
-}
-
-// Examples
-
-func run(e Exp) {
-	closure := makeRootTypeClosure()
-
-	fmt.Printf("\n ******* ")
-	fmt.Printf("\n %s", e.pretty())
-	fmt.Printf("\n %s", showVal(e.eval(makeRootValueClosure(ExecutionContext{}))))
-	fmt.Printf("\n %s", showType(e.infer(closure)))
-}
-
-func runStatement(e Stmt) {
-	fmt.Printf("\n ******* ")
-	fmt.Printf("\n %s \n", e.pretty())
-	e.eval(makeRootValueClosure(ExecutionContext{}))
 }

@@ -53,7 +53,7 @@ func assertFailsOnStatement(t *testing.T, ast Stmt, stmt Stmt) {
 }
 
 func TestAssignmentTypecheck(t *testing.T) {
-	// Variable does not exist
+	// Assignment before declaration
 	ast := assignmentStatement("something", number(5))
 	assertFailsOnStatement(t, ast, ast)
 
