@@ -10,12 +10,6 @@ func makeExecutionContext() ExecutionContext {
 
 type ExecutionConsumer func(value Val)
 
-type ExecutionValidatorResult struct {
-	failed *bool
-}
-
-type ValidatedChannel chan bool
-
 func executeAst(program Stmt, consumer ExecutionConsumer) Closure[Val] {
 	context := makeExecutionContext()
 	closure := makeRootValueClosure(context)
@@ -25,6 +19,7 @@ func executeAst(program Stmt, consumer ExecutionConsumer) Closure[Val] {
 		if len(closure.getErrorStack()) == 0 {
 			context.signal <- true
 		} else {
+			print("==== Runtime error:")
 			print(closure.errorStackToString())
 			context.signal <- false
 		}
@@ -45,14 +40,29 @@ func executeAst(program Stmt, consumer ExecutionConsumer) Closure[Val] {
 }
 
 func Execute(source string) {
+	tokens, err := tokenize(source)
+	if err != nil {
+		println("==== Tokenization error:")
+		println(err.Error())
+		return
+	}
+	program, err := parseFromTokens(tokens)
+	if err != nil {
+		println("==== Parsing error:")
+		println(err.Error())
+		return
+	}
 
-	tokens, _ := tokenize(source)
-	program, _ := parseFromTokens(tokens)
 	closure := makeRootTypeClosure()
-	program.check(closure)
+	check := program.check(closure)
+	if !check {
+		println("==== Typecheck error:")
+		println(closure.errorStackToString())
+		return
+	}
 
 	if program != nil {
-		print("\n\n" + program.pretty() + "\n")
+		print("\n\nInterpeted AST: \n{\n" + indent(program.pretty()) + "}\n\nOutput:\n")
 		executeAst(program, func(value Val) {
 			println(showVal(value))
 		})
