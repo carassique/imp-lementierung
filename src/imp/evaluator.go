@@ -6,7 +6,7 @@ package imp
 // Stmt instances
 
 func (stmt Print) eval(s Closure[Val]) {
-	s.getExecutionContext().out <- showVal(stmt.exp.eval(s))
+	s.getExecutionContext().out <- stmt.exp.eval(s)
 }
 
 func isValidValueType(val Val) bool {

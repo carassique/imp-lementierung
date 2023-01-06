@@ -93,9 +93,6 @@ func showVal(v Val) string {
 	switch {
 	case v.flag == ValueInt:
 		s = Num(v.valI).pretty()
-		if v.valI < 0 {
-			s = "(" + s + ")"
-		}
 	case v.flag == ValueBool:
 		s = Bool(v.valB).pretty()
 	case v.flag == Undefined:

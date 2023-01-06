@@ -320,7 +320,7 @@ type Assign struct {
 	rhs Exp
 }
 
-type PrintChannel chan string
+type PrintChannel chan Val
 type SignalChannel chan bool
 
 type Print struct {

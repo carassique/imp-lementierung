@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"unicode"
 )
 
 var terminalTokensPriority = []string{
@@ -216,36 +215,18 @@ func isSkippable(word string) bool {
 func tokenize(sourcecode string) (TokenizerResultData, error) {
 	tokenList := make([]Token, 0)
 	candidateMatchers := allMatchers()
-	//fullMatchers := allMatchers()
-	//prefixMatchers := allPrefixMatchers()
 	paddedSourceCode := sourcecode + " " // To match last character easier
 	tokenCandidate := ""
 	currentToken := ""
 	for _, character := range paddedSourceCode {
 		currentToken += (string)(character)
 		hasMatch, newCandidateMatchers := matchCandidateToken(currentToken, candidateMatchers)
-
-		// if anyPrefixMatches(currentToken, prefixMatchers...) {
-		// 	// consider token still possible
-
-		// } else {
-		// 	// evaluate results
-
-		// 	// has full matches? -> jump back to the longest
-		// 	// has no full matches -> skip one character, try again
-		// }
-
-		// if ok, _ := anyFullMatches(currentToken, fullMatchers...); ok {
-
-		// }
 		if !hasMatch {
-			// TODO: make full match
 			success, nextToken := makeToken(tokenCandidate, candidateMatchers)
 			candidateMatchers = allMatchers()
 			if success {
 				tokenList = append(tokenList, nextToken)
 			} else {
-				// TODO error
 				if len(tokenCandidate) > 0 && !isSkippable(tokenCandidate) {
 					return tokenList, errors.New("Could not recognize token " + tokenCandidate)
 				}
@@ -275,77 +256,4 @@ func tokenize(sourcecode string) (TokenizerResultData, error) {
 		}
 	}
 	return tokenList, nil
-}
-
-func tokenize2(sourceCode string, terminalTokens StringSet) TokenizerResultData {
-	// TODO: simplify code, use scanner or generic lexer
-	// TODO: write tests and fix issues
-	tokenList := make([]Token, 0)
-
-	currentToken := ""
-	tokenCandidate := ""
-	for _, character := range sourceCode {
-		if unicode.IsSpace(character) {
-			if len(currentToken) > 0 {
-				if len(tokenCandidate) > 0 {
-					tokenList = append(tokenList, Token{
-						tokenType: Terminal,
-						token:     currentToken,
-					})
-				} else {
-					//TODO: is non-terminal?
-					if constitutesValue, value := isValue(currentToken); constitutesValue {
-						tokenList = append(tokenList, value)
-					}
-
-					//TODO: error - no token recognized!
-				}
-				tokenCandidate = ""
-				currentToken = ""
-			}
-		} else {
-			// Ignore spaces between tokens
-			currentToken += (string)(character)
-			if isTerminal(currentToken, terminalTokens) {
-				tokenCandidate = currentToken
-				if !isAmbiguous(currentToken) {
-					tokenList = append(tokenList, Token{
-						tokenType: Terminal,
-						token:     currentToken,
-					})
-					currentToken = ""
-					tokenCandidate = ""
-				}
-			} else {
-				if len(tokenCandidate) > 0 {
-					tokenList = append(tokenList, Token{
-						tokenType: Terminal,
-						token:     tokenCandidate,
-					})
-					currentToken = (string)(character)
-				}
-				if isTerminal(currentToken, terminalTokens) {
-					tokenCandidate = currentToken
-					if !isAmbiguous(currentToken) {
-						tokenList = append(tokenList, Token{
-							tokenType: Terminal,
-							token:     currentToken,
-						})
-						currentToken = ""
-						tokenCandidate = ""
-					}
-				}
-			}
-		}
-
-	}
-	// Anything remains after the last character, it should be matched
-	if len(tokenCandidate) > 0 {
-		tokenList = append(tokenList, Token{
-			tokenType: Terminal,
-			token:     tokenCandidate,
-		})
-	}
-
-	return tokenList
 }
