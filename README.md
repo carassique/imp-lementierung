@@ -52,10 +52,16 @@ Input: {test=1; print test}
 ============== ERROR STACK END TYPE-CHECKER =================
 ```
 
-**This implementation of IMP enforces strict "stmt;stmt" sequencing rules. such that: `{print 1;}` would be an invalid program, as would `{print 1; print 2;}`.**
+
 
 
 # Implementation details
+## Syntax
+* This implementation of IMP enforces strict "stmt; stmt" sequencing rules. such that: `{print 1;}` would be an invalid program, as would `{print 1; print 2;}`. However `{ print 1 }` and `{ print 1; print 2 }` are valid programs, as `;` delimiter is only inserted between two statements in a block.
+* Each program must be wrapped by a block `{ }`.
+* Empty blocks are not allowed.
+* If-then-else expects all blocks to be present. Only `if { }` is not allowed.
+
 ## Quality assurance
 Language implementation makes use of the Go standard testing library https://pkg.go.dev/testing and
 includes automated unit and integration tests, which can be run via `go test imp -v` from the root directory.
@@ -93,10 +99,100 @@ Operating principle of the tokenizer is as follows:
     * Order of precedence is important to not interpret e.g. `true` as a variable with identifier `true`, but rather as a boolean literal.
 5. Since the only ambiguous case involves `=` and `==` tokens, one-character-backtrack is sufficient to distinguish all types of tokens.
 ### Parsing
+The parser receives a stack of tokens, which have already been categorized into the following types:
+* Integer values (with integer values already parsed and type-cast)
+* Boolean values (with boolean values already parsed and type-cast)
+* Variable identifiers (with identifier format already checked)
+* Terminal symbols (only valid terminal symbols)
 
-## Type-checker
+The parser then goes through the stack of `n` tokens in `O(n)` time, by popping or peeking each token and deciding on the possible case without backtracking.
+
+Before implementing the recursive descent parser, some aspects of parser grammar had to be normalized. Specifically, binary infix opeartors presented with left-recursion were split into multiple rules that eliminate left-recursion.
+For instance, expression part of the grammar was transformed from this:
+```
+exp ::= 
+     | exp "+" exp           -- Addition
+     | exp "*" exp           -- Multiplication
+     ...
+```
+into a set of rules which is similar to this:
+```
+plus ::= mult plusRhs
+plusRhs::= + plus |
+mult ::= det multRhs
+multRhs ::= * mult |
+...
+```
+This normalization behavior was implemented generically at `parseExpressionGeneric()` in `parser.go`, and resulting operator precedence is defined in `parser_globals.go`:
+```
+	precedence := [...]*InfixOperator{
+		&mult,
+		&plus,
+		&lessThan,
+		&equals,
+		&and,
+		&or,
+	}
+```
+`parseExpressionGeneric()` tries to parse the left-hand-side of the expression with the operator of highest precedence, otherwise falling back to plain value parsing.
+
+The initial rule for parsing programs is implemented in the function `parseProgram()`. Parser is using helper methods from `TokenizerStream` which implement different checks and operations on the token stack, such as `expectTerminal()` (for popping and verifying terminal tokens) or `peekTokenType()` (for checking token types before deciding on applicable rules).
+
+Each parser function which consumes the `TokenizerStream` corresponds to a rule in the normalized grammar. It returns either a respective part of the AST, or an error.
+
+## Variable scoping
+This implementation does not use the simplifying assumption of distinct variables, and implements the general specification for standard variable scoping.
+Following example sources are therefore valid:
+
+(Example 1 from task definition)
+```
+{ 
+  x := 1; x := x < 2
+}
+```
+...as variable can be redeclared within the same scope. It means that `x` is going to have numeric value `1` until it is redeclared, where it would change it's type for boolean value `true`.
+
+(Example 2 from task definition)
+```
+x := false;
+while x {
+  x := 1
+};
+x := true
+```
+...as `x` in the outer scope remains of type boolean, and only within the execution block of `while` does it **locally** create variable `x` of type integer, which hides the outer-scoped `x` for the duration of the block (as there is no redeclaration within this block).
+
+### Closures
+The above variable scoping rules are upheld by utilizing the generic interface `Closure[T]` as implemented in `closure.go`.   `Closure[T]` has methods for variable assignment, lookup and declaration. These methods take into account a possible tree-like structure that variable environments can take. On each new execution block, both in the typechecker and the evaluator, a new child variable environment is created by calling `closure.makeChild()`. Child closure always retains references to the parent closure, where it redirects variable lookup calls, if variable names have not been redefined locally. This also ensures, that no local variables leak into the outer scope, as they never overwrite the data in the parent closure.
+
+This interface also provides methods for tracking runtime and typechecking errors, by pushing them onto a global error stack, while retaining references to error origins.
+
 ## Evaluator
+Evaluator employs short-circuit execution within && and || expressions. Evaluator can be allowed to run disregarding type-checking results, by appending the flag `-i` to the end of `impev` command (see [Running](##Running)).
 
+```
+./impev "{ print true ||  1 }" -i
+Input: { print true ||  1 }
+==== Typecheck error:
+
+============== ERROR STACK TYPE-CHECKER ====================
+[Or] Expected [TyBool] but received [TyInt]: '1' in '(true || 1)'
+[Print] Ill typed parameter for print
+============== ERROR STACK END TYPE-CHECKER =================
+
+
+
+Interpeted AST: 
+{
+    print (true || 1)
+}
+
+Output:
+true
+```
+
+
+# (Initial requirements)
 ## Type-checker
 ## Evaluator
 (can use variable bound simplification)

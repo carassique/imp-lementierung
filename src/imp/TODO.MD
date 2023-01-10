@@ -31,7 +31,7 @@
         - see TestNumbers
 - [x] Check isSkippable for CRLF/LF
         - won't do: can only test under linux
-        - [ ] document supported systems
+        - [x] document supported systems
 - [x] if {} else {} else {} should not cause panic
         - was only causing panic due to test setup running the prettify()
 
@@ -45,7 +45,7 @@
 ## General-TODOs
 - [x] Check build system, allow running as CLI, compile
 - [x] Add rigid test cases for evaluator and typechecker
-- [ ] Documentation, how-to's
+- [x] Documentation, how-to's
 - [x] Request review
 
 ## Deadlines
