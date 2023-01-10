@@ -191,6 +191,7 @@ Output:
 true
 ```
 
+**Notice: Evaluator is programmed to interrupt a running loop if at least 5 errors have occured in the error stack.**
 
 # (Initial requirements)
 ## Type-checker
