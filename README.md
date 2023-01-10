@@ -168,7 +168,7 @@ The above variable scoping rules are upheld by utilizing the generic interface `
 This interface also provides methods for tracking runtime and typechecking errors, by pushing them onto a global error stack, while retaining references to error origins.
 
 ## Evaluator
-Evaluator employs short-circuit execution within && and || expressions. Evaluator can be allowed to run disregarding type-checking results, by appending the flag `-i` to the end of `impev` command (see [Running](##Running)).
+Evaluator employs short-circuit execution within && and || expressions. Evaluator can be allowed to run disregarding type-checking results, by appending the flag `-i` to the end of `impev` command (see [Running](#Running)).
 
 ```
 ./impev "{ print true ||  1 }" -i
