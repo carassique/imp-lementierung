@@ -1,5 +1,7 @@
 # imp-lementierung - IMP Language Implementation
 
+[![Build](https://github.com/carassique/imp-lementierung/actions/workflows/go.yml/badge.svg)](https://github.com/carassique/imp-lementierung/actions/workflows/go.yml)
+
 ## Template and description from
 https://sulzmann.github.io/ModelBasedSW/imp.html
 ## Task definition
