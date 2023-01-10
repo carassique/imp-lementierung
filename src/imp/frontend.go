@@ -39,7 +39,7 @@ func executeAst(program Stmt, consumer ExecutionConsumer) Closure[Val] {
 	return closure
 }
 
-func Execute(source string) {
+func Execute(source string, ignoreTypecheck bool) {
 	tokens, err := tokenize(source)
 	if err != nil {
 		println("==== Tokenization error:")
@@ -58,7 +58,9 @@ func Execute(source string) {
 	if !check {
 		println("==== Typecheck error:")
 		println(closure.errorStackToString())
-		return
+		if !ignoreTypecheck {
+			return
+		}
 	}
 
 	if program != nil {

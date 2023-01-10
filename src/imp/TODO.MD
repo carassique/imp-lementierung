@@ -43,10 +43,10 @@
 - [ ] Remove unused code
 
 ## General-TODOs
-- [ ] Check build system, allow running as CLI, compile
+- [x] Check build system, allow running as CLI, compile
 - [x] Add rigid test cases for evaluator and typechecker
 - [ ] Documentation, how-to's
-- [ ] Request review
+- [x] Request review
 
 ## Deadlines
 - [x] Fetch deadlines

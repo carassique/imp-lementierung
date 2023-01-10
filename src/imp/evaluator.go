@@ -97,7 +97,6 @@ const (
 )
 
 func (exp Equals) eval(s Closure[Val]) Val {
-	//TODO: verify spec for AND (short circuting allowed?)
 	e1 := exp[0].eval(s)
 	e2 := exp[1].eval(s)
 	if e1.flag == e2.flag {
@@ -176,11 +175,11 @@ func (e Plus) eval(s Closure[Val]) Val {
 
 func (e And) eval(s Closure[Val]) Val {
 	b1 := e[0].eval(s)
-	b2 := e[1].eval(s)
-	switch {
-	case b1.flag == ValueBool && b1.valB == false:
+	if b1.flag == ValueBool && !b1.valB {
 		return mkBool(false)
-	case b1.flag == ValueBool && b2.flag == ValueBool:
+	}
+	b2 := e[1].eval(s)
+	if b1.flag == ValueBool && b2.flag == ValueBool {
 		return mkBool(b1.valB && b2.valB)
 	}
 	s.error(e, operatorToString(e, b1, b2, IncompatibleTypes))
@@ -189,11 +188,11 @@ func (e And) eval(s Closure[Val]) Val {
 
 func (e Or) eval(s Closure[Val]) Val {
 	b1 := e[0].eval(s)
-	b2 := e[1].eval(s)
-	switch {
-	case b1.flag == ValueBool && b1.valB == true:
+	if b1.flag == ValueBool && b1.valB {
 		return mkBool(true)
-	case b1.flag == ValueBool && b2.flag == ValueBool:
+	}
+	b2 := e[1].eval(s)
+	if b1.flag == ValueBool && b2.flag == ValueBool {
 		return mkBool(b1.valB || b2.valB)
 	}
 	s.error(e, operatorToString(e, b1, b2, IncompatibleTypes))

@@ -29,7 +29,7 @@ func stringsToVal(t *testing.T, values ...string) []Val {
 	return vals
 }
 
-func assertOutputEqualsSource(t *testing.T, programSource string, values ...string) {
+func assertOutputEqualsSourceParams(t *testing.T, programSource string, ignoreTypeCheck bool, values ...string) {
 	t.Log("----------------------------------------------")
 	t.Log("Program: " + programSource)
 	vals := stringsToVal(t, values...)
@@ -41,28 +41,39 @@ func assertOutputEqualsSource(t *testing.T, programSource string, values ...stri
 	if ast != nil {
 		t.Log("Interpreted AST: \n{\n" + indent(ast.pretty()) + "}")
 		typeClosure := makeRootTypeClosure()
+
 		checked := ast.check(typeClosure)
-		assert.True(t, checked) //Typecheck successful
+		if !ignoreTypeCheck {
+			assert.True(t, checked) //Typecheck successful
+		}
 		errorStackForTypecheck := typeClosure.getErrorStack()
-		assert.Equal(t, len(errorStackForTypecheck), 0) //No errors occured
+		if !ignoreTypeCheck {
+			assert.Equal(t, len(errorStackForTypecheck), 0) //No errors occured
+		}
+
 		if len(errorStackForTypecheck) > 0 {
 			print(typeClosure.errorStackToString())
 		}
+
 		assertOutputEquals(t, ast, vals...)
 	}
 }
 
+func assertOutputEqualsSource(t *testing.T, programSource string, values ...string) {
+	assertOutputEqualsSourceParams(t, programSource, false, values...)
+}
+
 func assertOutputEquals(t *testing.T, program Stmt, values ...Val) {
-	stack := makeStack(values...)
+	stack := MakeStack(values...)
 	failed := false
 	counter := 0
 	consumer := func(value Val) {
-		if stack.isEmpty() {
+		if stack.IsEmpty() {
 			failed = true
 			t.Log("Received more output than expected: " + valToString(value))
 			t.FailNow()
 		}
-		expectedValue := stack.pop()
+		expectedValue := stack.Pop()
 		counter++
 		t.Log("[" + strconv.Itoa(counter) + "] Output: " + valToString(value) + " Expected: " + valToString(expectedValue))
 		assert.Equal(t, expectedValue, value)
@@ -73,8 +84,13 @@ func assertOutputEquals(t *testing.T, program Stmt, values ...Val) {
 	}
 	closure := executeAst(program, consumer)
 	assert.False(t, failed)                   //No unexpected result appeared
-	assert.True(t, stack.isEmpty())           //Every expected value matched output value
+	assert.True(t, stack.IsEmpty())           //Every expected value matched output value
 	assert.Len(t, closure.getErrorStack(), 0) //No errors occured
+}
+
+func TestShortCircuitEvaluation(t *testing.T) {
+	assertOutputEqualsSourceParams(t, "{ print false && 1 }", true, "false")
+	assertOutputEqualsSourceParams(t, "{ print true || 1 }", true, "true")
 }
 
 func TestEvalPrint(t *testing.T) {
