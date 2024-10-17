@@ -1,10 +1,10 @@
 # imp-lementierung - IMP Language Implementation
-
 [![Build](https://github.com/carassique/imp-lementierung/actions/workflows/go.yml/badge.svg)](https://github.com/carassique/imp-lementierung/actions/workflows/go.yml)
 
-## Template and description from
+This is an implementation of the IMP language that includes a tokenizer, a parser and an interpreter, made as a part of a university course by https://github.com/sulzmann.
+## Incomplete project template from
 https://sulzmann.github.io/ModelBasedSW/imp.html
-## Task definition
+## IMP language specifications
 https://sulzmann.github.io/ModelBasedSW/notesWiSe22-23.html#(7)
 
 # How to build and run demonstrator utility
@@ -194,10 +194,3 @@ true
 ```
 
 **Notice: Evaluator is programmed to interrupt a running loop if at least 5 errors have occured in the error stack.**
-
-# (Initial requirements)
-## Type-checker
-## Evaluator
-(can use variable bound simplification)
-## Parser
-(can be skipped)
